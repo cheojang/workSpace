@@ -25,6 +25,11 @@
       <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
       <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="3 3 3 8 8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-cube" viewBox="0 0 24 24"><path d="M12 2 3 7v10l9 5 9-5V7Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M3 7l9 5 9-5M12 12v10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+      <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="3" fill="none" stroke="currentColor" stroke-width="2"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4" stroke="currentColor" stroke-width="2"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="7 10 12 15 17 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="7 8 12 3 17 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
     </defs>
   </svg>
 
@@ -59,8 +64,21 @@
 
       <button class="icon-btn" id="resetView" title="시점 초기화"><svg class="icon"><use href="#i-reset"/></svg></button>
       <button class="icon-btn" id="themeToggle" title="테마 전환"><svg class="icon theme-icon-dark"><use href="#i-sun"/></svg><svg class="icon theme-icon-light"><use href="#i-moon"/></svg></button>
+
+      <div class="menu-wrap">
+        <button class="icon-btn" id="shareMenuBtn" title="공유 · 내보내기"><svg class="icon"><use href="#i-share"/></svg></button>
+        <div class="menu" id="shareMenu" hidden>
+          <button class="menu-item" id="mShareLink"><svg class="icon"><use href="#i-link"/></svg> 공유 링크 만들기</button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" id="mExportCsv"><svg class="icon"><use href="#i-download"/></svg> CSV 내보내기</button>
+          <button class="menu-item" id="mImportCsv"><svg class="icon"><use href="#i-upload"/></svg> CSV 가져오기</button>
+        </div>
+      </div>
+
       <button class="add-stage-btn" id="addStage"><svg class="icon"><use href="#i-plus"/></svg> 리스트 추가</button>
     </header>
+
+    <input type="file" id="csvFile" accept=".csv,text/csv" hidden />
 
     <!-- ============ 3D Board ============ -->
     <main class="stage" id="stage">
@@ -106,6 +124,26 @@
       </form>
     </div>
   </div>
+
+  <!-- ============ Share modal ============ -->
+  <div class="modal-overlay" id="shareOverlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h2 id="shareModalTitle">공유 링크</h2>
+        <button class="icon-btn" id="shareClose"><svg class="icon"><use href="#i-close"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <p class="share-desc" id="shareDesc">아래 링크를 친구에게 보내세요. 친구가 링크를 열면 이 보드가 자신의 보드에 병합됩니다.</p>
+        <label class="field"><span>공유 링크</span><textarea id="shareUrl" rows="3" readonly></textarea></label>
+        <div class="modal-actions">
+          <button type="button" class="btn ghost" id="shareCopyCode">코드만 복사</button>
+          <button type="button" class="btn primary" id="shareCopy"><svg class="icon"><use href="#i-copy"/></svg> 링크 복사</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
 
   <script src="app.js" defer></script>
 </body>

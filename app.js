@@ -520,6 +520,187 @@
   searchEl.addEventListener("input", () => { state.view.search = searchEl.value; applySearch(); save(); });
 
   // ===================================================================
+  //  UTILITIES — toast, clipboard, download
+  // ===================================================================
+  let toastTimer = null;
+  function toast(msg) {
+    const t = $("#toast");
+    t.textContent = msg; t.hidden = false;
+    requestAnimationFrame(() => t.classList.add("show"));
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      t.classList.remove("show");
+      setTimeout(() => (t.hidden = true), 250);
+    }, 2000);
+  }
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch (e) {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (_) {}
+      ta.remove(); return true;
+    }
+  }
+  function download(filename, text, mime) {
+    const blob = new Blob([text], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function dateStamp() {
+    const d = new Date(), p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}`;
+  }
+
+  // ===================================================================
+  //  CSV  export / import
+  // ===================================================================
+  const CSV_COLS = ["stage", "title", "categories", "due", "assignee", "priority", "note"];
+  function csvCell(v) {
+    v = String(v == null ? "" : v);
+    return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  }
+  function exportCsv() {
+    const rows = [CSV_COLS.slice()];
+    state.board.stages.forEach((st) => {
+      st.cardIds.forEach((cid) => {
+        const c = state.board.cards[cid]; if (!c) return;
+        rows.push([st.name, c.title, c.categories.join("|"), c.due || "", c.assignee || "", c.priority || "", c.note || ""]);
+      });
+    });
+    const csv = rows.map((r) => r.map(csvCell).join(",")).join("\r\n");
+    download(`taskcube-${dateStamp()}.csv`, "﻿" + csv, "text/csv;charset=utf-8");
+    toast(`${rows.length - 1}개 카드를 내보냈습니다`);
+  }
+  function parseCsv(text) {
+    text = text.replace(/^﻿/, "");
+    const rows = []; let row = [], field = "", i = 0, q = false;
+    while (i < text.length) {
+      const ch = text[i];
+      if (q) {
+        if (ch === '"') { if (text[i + 1] === '"') { field += '"'; i += 2; continue; } q = false; i++; continue; }
+        field += ch; i++; continue;
+      }
+      if (ch === '"') { q = true; i++; continue; }
+      if (ch === ",") { row.push(field); field = ""; i++; continue; }
+      if (ch === "\r") { i++; continue; }
+      if (ch === "\n") { row.push(field); field = ""; rows.push(row); row = []; i++; continue; }
+      field += ch; i++;
+    }
+    if (field.length || row.length) { row.push(field); rows.push(row); }
+    return rows;
+  }
+  function importCsv(text) {
+    const rows = parseCsv(text).filter((r) => r.some((c) => (c || "").trim() !== ""));
+    if (!rows.length) { toast("빈 CSV 파일입니다"); return; }
+    const header = rows[0].map((h) => h.trim().toLowerCase());
+    const idx = {}; let start = 0;
+    if (header.some((h) => CSV_COLS.includes(h))) { CSV_COLS.forEach((k) => (idx[k] = header.indexOf(k))); start = 1; }
+    else CSV_COLS.forEach((k, n) => (idx[k] = n));
+    const get = (row, k) => (idx[k] >= 0 && row[idx[k]] != null ? row[idx[k]].trim() : "");
+    let count = 0;
+    for (let r = start; r < rows.length; r++) {
+      const row = rows[r];
+      const title = get(row, "title"); if (!title) continue;
+      const cats = get(row, "categories").split(/[|,]/).map((s) => s.trim()).filter(Boolean);
+      const pri = get(row, "priority");
+      const card = {
+        id: uid("c"), title,
+        categories: cats.length ? cats : ["기타"],
+        due: get(row, "due"), assignee: get(row, "assignee"),
+        priority: ["높음", "보통", "낮음"].includes(pri) ? pri : "보통",
+        note: get(row, "note"),
+      };
+      const stageName = get(row, "stage") || (state.board.stages[0] && state.board.stages[0].name) || "할 일";
+      let st = state.board.stages.find((s) => s.name === stageName);
+      if (!st) { st = { id: uid("s"), name: stageName, cardIds: [] }; state.board.stages.push(st); }
+      state.board.cards[card.id] = card; st.cardIds.push(card.id); count++;
+    }
+    flush(); render();
+    toast(count ? `${count}개 카드를 가져왔습니다` : "가져올 카드가 없습니다");
+  }
+
+  // ===================================================================
+  //  SHARE  link/code encode-decode + merge
+  // ===================================================================
+  function b64encodeUtf8(str) {
+    return btoa(unescape(encodeURIComponent(str)))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function b64decodeUtf8(b64) {
+    b64 = b64.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    return decodeURIComponent(escape(atob(b64)));
+  }
+  function makeShareUrl() {
+    const code = b64encodeUtf8(JSON.stringify({ v: 1, board: state.board }));
+    return { code, url: location.origin + location.pathname + "#share=" + code };
+  }
+  function mergeBoard(incoming) {
+    incoming.stages.forEach((inStage) => {
+      let target = state.board.stages.find((s) => s.name === inStage.name);
+      if (!target) { target = { id: uid("s"), name: inStage.name, cardIds: [] }; state.board.stages.push(target); }
+      (inStage.cardIds || []).forEach((oldId) => {
+        const c = incoming.cards[oldId]; if (!c) return;
+        const nid = uid("c");
+        state.board.cards[nid] = Object.assign({}, c, { id: nid });
+        target.cardIds.push(nid);
+      });
+    });
+  }
+  function checkSharedHash() {
+    const m = location.hash.match(/share=([^&]+)/);
+    if (!m) return;
+    try {
+      const data = JSON.parse(b64decodeUtf8(m[1]));
+      if (data && data.board && Array.isArray(data.board.stages)) {
+        const nCards = Object.keys(data.board.cards || {}).length;
+        const nStages = data.board.stages.length;
+        if (confirm(`친구가 공유한 보드를 내 보드에 병합할까요?\n단계 ${nStages}개 · 카드 ${nCards}개`)) {
+          mergeBoard(data.board); flush();
+          setTimeout(() => toast("공유된 보드를 병합했습니다"), 200);
+        }
+      }
+    } catch (e) { /* malformed share data — ignore */ }
+    history.replaceState(null, "", location.pathname + location.search);
+  }
+
+  // ---------- share/export menu wiring ----------
+  const shareMenu = $("#shareMenu");
+  $("#shareMenuBtn").addEventListener("click", (e) => { e.stopPropagation(); shareMenu.hidden = !shareMenu.hidden; });
+  shareMenu.addEventListener("click", (e) => e.stopPropagation());
+  document.addEventListener("click", () => { shareMenu.hidden = true; });
+  $("#mExportCsv").addEventListener("click", () => { shareMenu.hidden = true; exportCsv(); });
+  $("#mImportCsv").addEventListener("click", () => { shareMenu.hidden = true; $("#csvFile").click(); });
+  $("#csvFile").addEventListener("change", (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => importCsv(String(rd.result));
+    rd.readAsText(f); e.target.value = "";
+  });
+
+  // ---------- share modal ----------
+  const shareOverlay = $("#shareOverlay");
+  function openShare() {
+    $("#shareUrl").value = makeShareUrl().url;
+    shareOverlay.hidden = false;
+    setTimeout(() => $("#shareUrl").select(), 30);
+  }
+  function closeShare() { shareOverlay.hidden = true; }
+  $("#mShareLink").addEventListener("click", () => { shareMenu.hidden = true; openShare(); });
+  $("#shareClose").addEventListener("click", closeShare);
+  shareOverlay.addEventListener("click", (e) => { if (e.target === shareOverlay) closeShare(); });
+  $("#shareCopy").addEventListener("click", async () => { await copyText($("#shareUrl").value); toast("링크를 복사했습니다"); });
+  $("#shareCopyCode").addEventListener("click", async () => {
+    await copyText(($("#shareUrl").value.split("#share=")[1]) || ""); toast("코드를 복사했습니다");
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !shareOverlay.hidden) closeShare(); });
+
+  // ===================================================================
   //  BOOT
   // ===================================================================
   function boot() {
@@ -529,6 +710,7 @@
     searchEl.value = state.view.search || "";
     setMode(state.view.mode);
     if (state.view.mode === "3d") applyRotation();
+    checkSharedHash();
     render();
   }
   boot();
