@@ -251,16 +251,14 @@ input[type=range]::-moz-range-thumb {
 
 /* 3축 범례 — 좌측 상단, 시점 따라 회전 */
 .axis-gizmo {
-  position: absolute; left: 16px; top: 14px; z-index: 25;
-  width: 132px; height: 116px;
-  perspective: 520px;
+  position: absolute; left: 24px; top: 30px; z-index: 25;
+  width: 130px; height: 120px;
+  perspective: 560px;
   pointer-events: none;
-  background: var(--header-bg);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  /* 배경 투명 — 축만 보이도록 */
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,.35));
 }
+.ax-cap { backface-visibility: visible; }
 .axis-inner {
   position: absolute; left: 50%; top: 50%;
   width: 0; height: 0;
@@ -284,17 +282,15 @@ input[type=range]::-moz-range-thumb {
   border-left-color: currentColor; transform: translateY(-50%);
 }
 .ax-cap {
-  position: absolute; left: 46px; top: 50%;
-  transform: translateY(-50%);
+  position: absolute; left: -4px; top: -9px;
+  transform-origin: center;
   font-size: 12px; font-weight: 800; white-space: nowrap;
   color: var(--text);
+  /* 위치·정면화는 JS(updateGizmo)가 빌보드로 갱신 */
 }
 .ax-x { transform: rotateY(0deg); }    /* +X 오른쪽 = 단계 */
 .ax-y { transform: rotateZ(90deg); }   /* +Y 아래 = 리스트 */
 .ax-z { transform: rotateY(90deg); }   /* +Z 깊이 = 분류 */
-/* 라벨은 막대 회전을 상쇄해 수평 유지 */
-.ax-y .ax-cap { transform: translateY(-50%) rotateZ(-90deg); transform-origin: left center; }
-.ax-z .ax-cap { transform: translateY(-50%) rotateY(-90deg); transform-origin: left center; }
 
 /* 작업영역 플로팅 대분류 제목 */
 .group-float {
@@ -352,16 +348,20 @@ input[type=range]::-moz-range-thumb {
   transition: transform .45s var(--ease);
 }
 .column-inner {
-  background: var(--col-bg);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 14px;
-  backdrop-filter: blur(10px);
-  box-shadow: var(--shadow);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
 }
+/* 단계 제목 — 카드처럼 떠 있는 헤더 */
 .column-head {
   display: flex; align-items: center; gap: 9px;
-  padding: 4px 4px 14px;
+  padding: 11px 13px; margin-bottom: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
 }
 .col-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; box-shadow: 0 0 10px var(--accent); }
 .col-title {

@@ -165,7 +165,6 @@
       `<input class="col-title" value="${esc(stage.name)}" maxlength="24" />` +
       `<span class="col-count">${stage.cardIds.length}</span>` +
       `<button class="col-del" title="단계 삭제"><svg class="icon"><use href="#i-close"/></svg></button>`;
-    inner.appendChild(head);
 
     // card stack
     const stack = document.createElement("div");
@@ -190,6 +189,7 @@
     titleInput.addEventListener("keydown", (e) => { if (e.key === "Enter") titleInput.blur(); });
     head.querySelector(".col-del").addEventListener("click", () => deleteStage(stage.id));
 
+    col.appendChild(head);   // 단계 제목 — 카드처럼 떠 있는 헤더
     col.appendChild(inner);
     return col;
   }
@@ -484,9 +484,17 @@
     save();
   }
   // 축 범례(gizmo)를 현재 시점에 맞춰 회전 — 캐드처럼 같이 움직임
+  const capX = $("#capX"), capY = $("#capY"), capZ = $("#capZ");
   function updateGizmo() {
     const gi = $("#axisInner");
-    if (gi) gi.style.transform = `rotateX(${state.view.rotX}deg) rotateY(${state.view.rotY}deg)`;
+    if (!gi) return;
+    const rx = state.view.rotX, ry = state.view.rotY;
+    gi.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+    // 라벨은 축 끝에 두되 항상 정면을 보도록(빌보드) 부모 회전을 상쇄
+    const bb = `rotateY(${-ry}deg) rotateX(${-rx}deg)`, L = 50;
+    if (capX) capX.style.transform = `translateX(${L}px) ${bb}`;
+    if (capY) capY.style.transform = `translateY(${L}px) ${bb}`;
+    if (capZ) capZ.style.transform = `translateZ(${-L}px) ${bb}`;
   }
   rotXEl.addEventListener("input", () => setRotation(+rotXEl.value, state.view.rotY, false));
   rotYEl.addEventListener("input", () => setRotation(state.view.rotX, +rotYEl.value, false));
@@ -495,7 +503,7 @@
   let bgDrag = null;
   stageEl.addEventListener("pointerdown", (e) => {
     if (state.view.mode === "flat") return;
-    if (e.target.closest(".column") || e.target.closest(".card") || e.target.closest(".group-float")) return;
+    if (e.target.closest(".column") || e.target.closest(".card")) return;
     e.preventDefault(); // 텍스트 선택 방지
     bgDrag = { x: e.clientX, y: e.clientY, rx: state.view.rotX, ry: state.view.rotY };
     stageEl.classList.add("rotating");
@@ -536,7 +544,7 @@
   // ===================================================================
   //  Z축 — 대분류(프로젝트) 깊이 전환
   // ===================================================================
-  const gfName = $("#groupFloatName"), gfIdx = $("#groupFloatIdx");
+  const zBadge = $("#zNav"), zName = $("#zNavName"), zIdx = $("#zNavIdx");
   // 활성 대분류는 맨 앞 선명, 나머지는 Z축 뒤로 + 위로 빼꼼 + 흐리게
   function applyFocus() {
     const n = state.groups.length;
@@ -554,8 +562,8 @@
       gb.classList.toggle("active", rel === 0);
     });
     const g = state.groups[focus];
-    if (gfName) gfName.textContent = g ? g.name : "";
-    if (gfIdx) gfIdx.textContent = (focus + 1) + " / " + n;
+    if (zName) zName.textContent = g ? g.name : "";
+    if (zIdx) zIdx.textContent = (focus + 1) + " / " + n;
     requestAnimationFrame(layoutFloor);
   }
   // 바닥 판을 활성 보드 크기(단계 수·컬럼 높이)에 맞춰 배치
@@ -603,9 +611,9 @@
     e.preventDefault(); e.stopPropagation();
     setFocus((state.view.focus | 0) + (e.deltaY > 0 ? 1 : -1));
   }
-  $("#groupFloat").addEventListener("wheel", groupWheel, { passive: false });
-  $("#gfPrev").addEventListener("click", () => setFocus((state.view.focus | 0) - 1));
-  $("#gfNext").addEventListener("click", () => setFocus((state.view.focus | 0) + 1));
+  zBadge.addEventListener("wheel", groupWheel, { passive: false });
+  $("#zNavPrev").addEventListener("click", () => setFocus((state.view.focus | 0) - 1));
+  $("#zNavNext").addEventListener("click", () => setFocus((state.view.focus | 0) + 1));
   // 화살표 키로도 대분류 전환
   document.addEventListener("keydown", (e) => {
     if (!overlay.hidden) return;
@@ -614,7 +622,7 @@
     else if (e.key === "ArrowDown" || e.key === "ArrowRight") { e.preventDefault(); setFocus((state.view.focus | 0) + 1); }
   });
   // 대분류 추가 / 이름변경 / 삭제
-  $("#groupFloatName").addEventListener("dblclick", renameGroup);
+  $("#zNavName").addEventListener("dblclick", renameGroup);
   $("#zNavAdd").addEventListener("click", addGroup);
   $("#zNavDel").addEventListener("click", deleteGroup);
   function addGroup() {

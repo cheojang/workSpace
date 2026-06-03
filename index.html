@@ -44,6 +44,17 @@
         </div>
       </div>
 
+      <!-- 대분류(Z축) 네비게이션 — 상단, 휠로 전환 -->
+      <div class="group-nav" id="zNav" title="휠로 분류 전환">
+        <button class="gnav-btn" id="zNavPrev" title="앞 대분류">◀</button>
+        <div class="gnav-body">
+          <span class="gnav-name" id="zNavName" title="더블클릭으로 이름 변경">대분류</span>
+          <span class="gnav-idx" id="zNavIdx">1 / 1</span>
+        </div>
+        <button class="gnav-btn" id="zNavNext" title="뒤 대분류">▶</button>
+        <button class="gnav-btn gnav-del" id="zNavDel" title="현재 대분류 삭제"><svg class="icon"><use href="#i-trash"/></svg></button>
+      </div>
+
       <div class="hdr-spacer"></div>
 
       <div class="mode-toggle" id="modeToggle">
@@ -67,7 +78,6 @@
 
       <div class="hdr-group">
         <button class="add-stage-btn alt" id="zNavAdd"><svg class="icon"><use href="#i-plus"/></svg> 분류 추가</button>
-        <button class="icon-btn" id="zNavDel" title="현재 대분류 삭제"><svg class="icon"><use href="#i-trash"/></svg></button>
         <button class="add-stage-btn alt" id="addStage"><svg class="icon"><use href="#i-plus"/></svg> 단계 추가</button>
       </div>
 
@@ -84,9 +94,12 @@
       <!-- 3축 범례 (시점 따라 회전하는 CAD형 gizmo) -->
       <div class="axis-gizmo" aria-hidden="true">
         <div class="axis-inner" id="axisInner">
-          <div class="ax ax-x"><span class="ax-cap">단계</span></div>
-          <div class="ax ax-y"><span class="ax-cap">리스트</span></div>
-          <div class="ax ax-z"><span class="ax-cap">분류</span></div>
+          <div class="ax ax-x"></div>
+          <div class="ax ax-y"></div>
+          <div class="ax ax-z"></div>
+          <span class="ax-cap" id="capX">단계</span>
+          <span class="ax-cap" id="capY">리스트</span>
+          <span class="ax-cap" id="capZ">분류</span>
           <div class="ax-origin"></div>
         </div>
       </div>
@@ -96,15 +109,6 @@
         <div class="ad-floor" id="adFloor" aria-hidden="true"><!-- Phase 2: ad slots --></div>
       </div>
 
-      <!-- 작업영역에 떠 있는 대분류 제목 (휠로 분류 전환) -->
-      <div class="group-float" id="groupFloat" title="휠을 굴려 다음 분류로 이동">
-        <button class="gf-arrow" id="gfPrev">▲</button>
-        <div class="gf-body">
-          <span class="gf-name" id="groupFloatName" title="더블클릭으로 이름 변경">대분류</span>
-          <span class="gf-hint"><b id="groupFloatIdx">1 / 1</b> · 휠로 전환</span>
-        </div>
-        <button class="gf-arrow" id="gfNext">▼</button>
-      </div>
     </main>
 
     <!-- 시점(회전) — 하단 우측 플로팅 -->
