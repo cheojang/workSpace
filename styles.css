@@ -247,6 +247,24 @@ input[type=range]::-moz-range-thumb {
 }
 .scene.no-anim { transition: none; }
 
+/* 3축 범례 — 좌측 상단 */
+.axis-legend {
+  position: absolute; left: 14px; top: 12px; z-index: 25;
+  width: 138px; height: auto;
+  color: var(--text);
+  pointer-events: none;
+  padding: 6px 8px;
+  background: var(--header-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.axis-legend .axis-label {
+  fill: currentColor; font-family: var(--font);
+  font-size: 13px; font-weight: 800;
+}
+
 /* Board holds group-boards, centered */
 .board {
   position: absolute;
