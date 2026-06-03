@@ -75,7 +75,7 @@
         </div>
       </div>
 
-      <button class="add-stage-btn" id="addStage"><svg class="icon"><use href="#i-plus"/></svg> 리스트 추가</button>
+      <button class="add-stage-btn" id="addStage"><svg class="icon"><use href="#i-plus"/></svg> 단계 추가</button>
     </header>
 
     <input type="file" id="csvFile" accept=".csv,text/csv" hidden />
@@ -89,6 +89,7 @@
 
       <!-- 대분류(Z축) 내비게이션 -->
       <div class="z-nav" id="zNav">
+        <span class="z-nav-label">대분류</span>
         <button class="z-nav-btn" id="zNavPrev" title="앞 대분류 (↑)">▲</button>
         <div class="z-nav-body">
           <span class="z-nav-name" id="zNavName" title="더블클릭으로 이름 변경">대분류</span>
@@ -96,9 +97,8 @@
         </div>
         <button class="z-nav-btn" id="zNavNext" title="뒤 대분류 (↓)">▼</button>
         <span class="z-nav-sep"></span>
-        <button class="z-nav-btn z-nav-act" id="zNavAdd" title="대분류 추가">＋</button>
+        <button class="z-nav-add" id="zNavAdd" title="새 대분류(프로젝트)를 Z축 뒤에 추가">＋ 새 대분류</button>
         <button class="z-nav-btn z-nav-act" id="zNavDel" title="현재 대분류 삭제">🗑</button>
-        <span class="z-nav-hint">휠로 대분류 이동</span>
       </div>
     </main>
 

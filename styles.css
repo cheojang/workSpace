@@ -405,6 +405,17 @@ input[type=range]::-moz-range-thumb {
 }
 .z-nav-btn:hover { color: var(--text); border-color: var(--border-strong); }
 .z-nav-act { font-size: 13px; }
+.z-nav-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--text-faint); padding-right: 2px; }
+.z-nav-add {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 28px; padding: 0 12px; border-radius: 999px;
+  border: 0; background: var(--accent-grad); color: #fff;
+  font-size: 12.5px; font-weight: 700; font-family: var(--font);
+  cursor: pointer; box-shadow: 0 4px 12px rgba(244,63,94,.32);
+  transition: filter .15s, transform .1s;
+}
+.z-nav-add:hover { filter: brightness(1.06); }
+.z-nav-add:active { transform: scale(.97); }
 .z-nav-sep { width: 1px; height: 20px; background: var(--border); }
 .z-nav-body { display: flex; flex-direction: column; align-items: center; min-width: 84px; line-height: 1.25; }
 .z-nav-name { font-size: 14px; font-weight: 800; cursor: text; }
