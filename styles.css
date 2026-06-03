@@ -196,6 +196,8 @@ input[type=range]::-moz-range-thumb {
 }
 .add-stage-btn:hover { transform: translateY(-2px); }
 .add-stage-btn .icon { font-size: 16px; }
+.hdr-spacer { flex: 1; }
+.hdr-group { display: flex; align-items: center; gap: 8px; }
 /* 분류 추가 — 보조 버튼(반투명) */
 .add-stage-btn.alt {
   background: var(--chip-bg); color: var(--text);
@@ -247,23 +249,73 @@ input[type=range]::-moz-range-thumb {
 }
 .scene.no-anim { transition: none; }
 
-/* 3축 범례 — 좌측 상단 */
-.axis-legend {
-  position: absolute; left: 14px; top: 12px; z-index: 25;
-  width: 138px; height: auto;
-  color: var(--text);
+/* 3축 범례 — 좌측 상단, 시점 따라 회전 */
+.axis-gizmo {
+  position: absolute; left: 16px; top: 14px; z-index: 25;
+  width: 132px; height: 116px;
+  perspective: 520px;
   pointer-events: none;
-  padding: 6px 8px;
   background: var(--header-bg);
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
-.axis-legend .axis-label {
-  fill: currentColor; font-family: var(--font);
-  font-size: 13px; font-weight: 800;
+.axis-inner {
+  position: absolute; left: 50%; top: 50%;
+  width: 0; height: 0;
+  transform-style: preserve-3d;
+  color: var(--text);
 }
+.ax-origin {
+  position: absolute; left: -3px; top: -3px;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+}
+.ax {
+  position: absolute; left: 0; top: 0;
+  width: 40px; height: 3px; margin-top: -1.5px;
+  background: currentColor; border-radius: 2px;
+  transform-origin: 0 50%;
+}
+.ax::after { /* 화살촉 */
+  content: ""; position: absolute; right: -2px; top: 50%;
+  width: 0; height: 0; border: 5px solid transparent;
+  border-left-color: currentColor; transform: translateY(-50%);
+}
+.ax-cap {
+  position: absolute; left: 46px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px; font-weight: 800; white-space: nowrap;
+  color: var(--text);
+}
+.ax-x { transform: rotateY(0deg); }    /* +X 오른쪽 = 단계 */
+.ax-y { transform: rotateZ(90deg); }   /* +Y 아래 = 리스트 */
+.ax-z { transform: rotateY(90deg); }   /* +Z 깊이 = 분류 */
+/* 라벨은 막대 회전을 상쇄해 수평 유지 */
+.ax-y .ax-cap { transform: translateY(-50%) rotateZ(-90deg); transform-origin: left center; }
+.ax-z .ax-cap { transform: translateY(-50%) rotateY(-90deg); transform-origin: left center; }
+
+/* 작업영역 플로팅 대분류 제목 */
+.group-float {
+  position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+  z-index: 24; display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px;
+  background: var(--header-bg); border: 1px solid var(--border-strong);
+  border-radius: 999px; box-shadow: var(--shadow);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  cursor: ns-resize; user-select: none;
+}
+.app.flat .group-float { display: none; }
+.gf-arrow {
+  width: 24px; height: 24px; display: grid; place-items: center;
+  border: 0; background: var(--chip-bg); color: var(--text-dim);
+  border-radius: 50%; cursor: pointer; font-size: 9px;
+}
+.gf-arrow:hover { color: var(--text); }
+.gf-body { display: flex; flex-direction: column; align-items: center; line-height: 1.15; min-width: 76px; }
+.gf-name { font-size: 15px; font-weight: 800; color: var(--text); }
+.gf-hint { font-size: 10px; color: var(--text-faint); }
 
 /* Board holds group-boards, centered */
 .board {
@@ -465,8 +517,8 @@ input[type=range]::-moz-range-thumb {
 /* ---------- Ad floor (Phase 2 placeholder) ---------- */
 .ad-floor {
   position: absolute;
-  left: 50%; top: 560px;
-  width: 1100px; height: 600px;
+  left: 50%; top: 560px;          /* top·width는 JS(layoutFloor)가 보드 크기에 맞춰 갱신 */
+  width: 1100px; height: 900px;
   transform: translateX(-50%) rotateX(90deg);
   transform-origin: top center;
   background:
@@ -474,7 +526,7 @@ input[type=range]::-moz-range-thumb {
     linear-gradient(90deg, var(--floor-line) 1px, transparent 1px) 0 0 / 60px 60px,
     var(--floor);
   border-radius: 8px;
-  opacity: .6;
+  opacity: .5;
   pointer-events: none;
 }
 

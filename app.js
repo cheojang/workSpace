@@ -479,8 +479,14 @@
     state.view.rotX = clamp(Math.round(rx), ROT_MIN, ROT_MAX);
     state.view.rotY = clamp(Math.round(ry), ROT_MIN, ROT_MAX);
     if (state.view.mode !== "flat") applyView();
+    updateGizmo();
     if (sync !== false) { rotXEl.value = state.view.rotX; rotYEl.value = state.view.rotY; }
     save();
+  }
+  // 축 범례(gizmo)를 현재 시점에 맞춰 회전 — 캐드처럼 같이 움직임
+  function updateGizmo() {
+    const gi = $("#axisInner");
+    if (gi) gi.style.transform = `rotateX(${state.view.rotX}deg) rotateY(${state.view.rotY}deg)`;
   }
   rotXEl.addEventListener("input", () => setRotation(+rotXEl.value, state.view.rotY, false));
   rotYEl.addEventListener("input", () => setRotation(state.view.rotX, +rotYEl.value, false));
@@ -489,7 +495,7 @@
   let bgDrag = null;
   stageEl.addEventListener("pointerdown", (e) => {
     if (state.view.mode === "flat") return;
-    if (e.target.closest(".column") || e.target.closest(".card")) return;
+    if (e.target.closest(".column") || e.target.closest(".card") || e.target.closest(".group-float")) return;
     e.preventDefault(); // 텍스트 선택 방지
     bgDrag = { x: e.clientX, y: e.clientY, rx: state.view.rotX, ry: state.view.rotY };
     stageEl.classList.add("rotating");
@@ -530,7 +536,7 @@
   // ===================================================================
   //  Z축 — 대분류(프로젝트) 깊이 전환
   // ===================================================================
-  const zBadge = $("#zNav"), zName = $("#zNavName"), zIdx = $("#zNavIdx");
+  const gfName = $("#groupFloatName"), gfIdx = $("#groupFloatIdx");
   // 활성 대분류는 맨 앞 선명, 나머지는 Z축 뒤로 + 위로 빼꼼 + 흐리게
   function applyFocus() {
     const n = state.groups.length;
@@ -547,11 +553,23 @@
       gb.style.setProperty("--gs", rel === 0 ? 1.05 : 0.9); // 활성은 살짝 크게
       gb.classList.toggle("active", rel === 0);
     });
-    if (zBadge) {
-      const g = state.groups[focus];
-      zName.textContent = g ? g.name : "";
-      zIdx.textContent = (focus + 1) + " / " + n;
-    }
+    const g = state.groups[focus];
+    if (gfName) gfName.textContent = g ? g.name : "";
+    if (gfIdx) gfIdx.textContent = (focus + 1) + " / " + n;
+    requestAnimationFrame(layoutFloor);
+  }
+  // 바닥 판을 활성 보드 크기(단계 수·컬럼 높이)에 맞춰 배치
+  function layoutFloor() {
+    const floor = $("#adFloor");
+    if (!floor) return;
+    const cols = activeGroup().stages.length;
+    const boardW = cols * COL_W + Math.max(0, cols - 1) * COL_GAP;
+    let maxH = 0;
+    document.querySelectorAll(".group-board.active .column-inner").forEach((el) => {
+      if (el.offsetHeight > maxH) maxH = el.offsetHeight;
+    });
+    floor.style.width = (boardW + 280) + "px";
+    floor.style.top = (40 + maxH + 28) + "px"; // 컬럼 아래로 (board top 40 + 최대 컬럼 높이)
   }
   // 무한 순환 전환 (끝에서 처음으로 wrap)
   function setFocus(next) {
@@ -580,14 +598,14 @@
     applyView();
     save();
   }, { passive: false });
-  // 상단 대분류 제목 영역에서 휠 = 대분류 전환 (무한 순환)
-  zBadge.addEventListener("wheel", (e) => {
+  // 대분류 제목 영역(헤더 네비 + 작업영역 플로팅)에서 휠 = 대분류 전환 (무한 순환)
+  function groupWheel(e) {
     e.preventDefault(); e.stopPropagation();
     setFocus((state.view.focus | 0) + (e.deltaY > 0 ? 1 : -1));
-  }, { passive: false });
-  // 상단 네비의 이전/다음 대분류
-  $("#zNavPrev").addEventListener("click", () => setFocus((state.view.focus | 0) - 1));
-  $("#zNavNext").addEventListener("click", () => setFocus((state.view.focus | 0) + 1));
+  }
+  $("#groupFloat").addEventListener("wheel", groupWheel, { passive: false });
+  $("#gfPrev").addEventListener("click", () => setFocus((state.view.focus | 0) - 1));
+  $("#gfNext").addEventListener("click", () => setFocus((state.view.focus | 0) + 1));
   // 화살표 키로도 대분류 전환
   document.addEventListener("keydown", (e) => {
     if (!overlay.hidden) return;
@@ -596,7 +614,7 @@
     else if (e.key === "ArrowDown" || e.key === "ArrowRight") { e.preventDefault(); setFocus((state.view.focus | 0) + 1); }
   });
   // 대분류 추가 / 이름변경 / 삭제
-  $("#zNavName").addEventListener("dblclick", renameGroup);
+  $("#groupFloatName").addEventListener("dblclick", renameGroup);
   $("#zNavAdd").addEventListener("click", addGroup);
   $("#zNavDel").addEventListener("click", deleteGroup);
   function addGroup() {
@@ -851,6 +869,7 @@
     searchEl.value = state.view.search || "";
     if (state.view.mode !== "flat") state.view.mode = "3d"; // 구버전 'category' 모드 정리
     setMode(state.view.mode);
+    updateGizmo();
     checkSharedHash();
     render();
   }

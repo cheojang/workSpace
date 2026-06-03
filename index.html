@@ -44,37 +44,32 @@
         </div>
       </div>
 
-      <!-- 대분류(Z축) 네비게이션 — 상단 -->
-      <div class="group-nav" id="zNav">
-        <button class="gnav-btn" id="zNavPrev" title="앞 대분류">◀</button>
-        <div class="gnav-body">
-          <span class="gnav-name" id="zNavName" title="더블클릭으로 이름 변경">대분류</span>
-          <span class="gnav-idx" id="zNavIdx">1 / 1</span>
-        </div>
-        <button class="gnav-btn" id="zNavNext" title="뒤 대분류">▶</button>
-        <button class="gnav-btn gnav-del" id="zNavDel" title="현재 대분류 삭제"><svg class="icon"><use href="#i-trash"/></svg></button>
-      </div>
+      <div class="hdr-spacer"></div>
 
       <div class="mode-toggle" id="modeToggle">
         <button class="mode-btn" data-mode="3d">입체</button>
         <button class="mode-btn" data-mode="flat">평면</button>
       </div>
 
-      <button class="icon-btn" id="resetView" title="시점·위치 초기화"><svg class="icon"><use href="#i-reset"/></svg></button>
-      <button class="icon-btn" id="themeToggle" title="테마 전환"><svg class="icon theme-icon-dark"><use href="#i-sun"/></svg><svg class="icon theme-icon-light"><use href="#i-moon"/></svg></button>
-
-      <div class="menu-wrap">
-        <button class="icon-btn" id="shareMenuBtn" title="공유 · 내보내기"><svg class="icon"><use href="#i-share"/></svg></button>
-        <div class="menu" id="shareMenu" hidden>
-          <button class="menu-item" id="mShareLink"><svg class="icon"><use href="#i-link"/></svg> 공유 링크 만들기</button>
-          <div class="menu-sep"></div>
-          <button class="menu-item" id="mExportCsv"><svg class="icon"><use href="#i-download"/></svg> CSV 내보내기</button>
-          <button class="menu-item" id="mImportCsv"><svg class="icon"><use href="#i-upload"/></svg> CSV 가져오기</button>
+      <div class="hdr-group">
+        <button class="icon-btn" id="resetView" title="시점·위치 초기화"><svg class="icon"><use href="#i-reset"/></svg></button>
+        <button class="icon-btn" id="themeToggle" title="테마 전환"><svg class="icon theme-icon-dark"><use href="#i-sun"/></svg><svg class="icon theme-icon-light"><use href="#i-moon"/></svg></button>
+        <div class="menu-wrap">
+          <button class="icon-btn" id="shareMenuBtn" title="공유 · 내보내기"><svg class="icon"><use href="#i-share"/></svg></button>
+          <div class="menu" id="shareMenu" hidden>
+            <button class="menu-item" id="mShareLink"><svg class="icon"><use href="#i-link"/></svg> 공유 링크 만들기</button>
+            <div class="menu-sep"></div>
+            <button class="menu-item" id="mExportCsv"><svg class="icon"><use href="#i-download"/></svg> CSV 내보내기</button>
+            <button class="menu-item" id="mImportCsv"><svg class="icon"><use href="#i-upload"/></svg> CSV 가져오기</button>
+          </div>
         </div>
       </div>
 
-      <button class="add-stage-btn alt" id="zNavAdd"><svg class="icon"><use href="#i-plus"/></svg> 분류 추가</button>
-      <button class="add-stage-btn" id="addStage"><svg class="icon"><use href="#i-plus"/></svg> 단계 추가</button>
+      <div class="hdr-group">
+        <button class="add-stage-btn alt" id="zNavAdd"><svg class="icon"><use href="#i-plus"/></svg> 분류 추가</button>
+        <button class="icon-btn" id="zNavDel" title="현재 대분류 삭제"><svg class="icon"><use href="#i-trash"/></svg></button>
+        <button class="add-stage-btn alt" id="addStage"><svg class="icon"><use href="#i-plus"/></svg> 단계 추가</button>
+      </div>
 
       <div class="search">
         <svg class="icon"><use href="#i-search"/></svg>
@@ -86,27 +81,29 @@
 
     <!-- ============ 3D Board ============ -->
     <main class="stage" id="stage">
-      <!-- 3축 범례 -->
-      <svg class="axis-legend" viewBox="0 0 164 144" aria-label="축 범례">
-        <defs>
-          <marker id="axis-arrow" markerWidth="7" markerHeight="7" refX="5.5" refY="3" orient="auto">
-            <path d="M0,0 L6,3 L0,6 Z" fill="currentColor"/>
-          </marker>
-        </defs>
-        <g stroke="currentColor" stroke-width="2.4" stroke-linecap="round" marker-end="url(#axis-arrow)">
-          <line x1="34" y1="102" x2="34" y2="24"/>   <!-- Y 위 -->
-          <line x1="34" y1="102" x2="106" y2="60"/>  <!-- Z 오른쪽 위 -->
-          <line x1="34" y1="102" x2="110" y2="132"/> <!-- X 오른쪽 아래 -->
-        </g>
-        <circle cx="34" cy="102" r="3" fill="currentColor"/>
-        <text class="axis-label" x="34" y="17" text-anchor="middle">리스트</text>
-        <text class="axis-label" x="114" y="58" text-anchor="start">분류</text>
-        <text class="axis-label" x="114" y="134" text-anchor="start">단계</text>
-      </svg>
+      <!-- 3축 범례 (시점 따라 회전하는 CAD형 gizmo) -->
+      <div class="axis-gizmo" aria-hidden="true">
+        <div class="axis-inner" id="axisInner">
+          <div class="ax ax-x"><span class="ax-cap">단계</span></div>
+          <div class="ax ax-y"><span class="ax-cap">리스트</span></div>
+          <div class="ax ax-z"><span class="ax-cap">분류</span></div>
+          <div class="ax-origin"></div>
+        </div>
+      </div>
 
       <div class="scene" id="scene">
         <div class="board" id="board"><!-- columns injected here --></div>
         <div class="ad-floor" id="adFloor" aria-hidden="true"><!-- Phase 2: ad slots --></div>
+      </div>
+
+      <!-- 작업영역에 떠 있는 대분류 제목 (휠로 분류 전환) -->
+      <div class="group-float" id="groupFloat" title="휠을 굴려 다음 분류로 이동">
+        <button class="gf-arrow" id="gfPrev">▲</button>
+        <div class="gf-body">
+          <span class="gf-name" id="groupFloatName" title="더블클릭으로 이름 변경">대분류</span>
+          <span class="gf-hint"><b id="groupFloatIdx">1 / 1</b> · 휠로 전환</span>
+        </div>
+        <button class="gf-arrow" id="gfNext">▼</button>
       </div>
     </main>
 
