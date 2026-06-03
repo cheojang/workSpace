@@ -202,12 +202,28 @@ input[type=range]::-moz-range-thumb {
 }
 .scene.no-anim { transition: none; }
 
-/* Board holds columns, centered */
+/* Board holds group-boards, centered */
 .board {
   position: absolute;
   top: 40px; left: 50%;
   transform-style: preserve-3d;
 }
+
+/* ---------- Group board (대분류 = Z축 깊이 평면) ---------- */
+.group-board {
+  position: absolute;
+  top: 0; left: 0;
+  transform-style: preserve-3d;
+  transform: translate3d(0, var(--gy, 0), var(--gz, 0));
+  transition: transform .55s var(--ease), opacity .45s var(--ease), filter .45s var(--ease);
+}
+.group-board:not(.active) {
+  opacity: .32;
+  filter: grayscale(.55) brightness(.9);
+  pointer-events: none;
+}
+[data-theme="light"] .group-board:not(.active) { opacity: .5; }
+.group-board.active { opacity: 1; }
 
 /* ---------- Column ---------- */
 .column {
@@ -270,37 +286,14 @@ input[type=range]::-moz-range-thumb {
 
 .card-face {
   position: relative;
-  transform-style: preserve-3d;
   border-radius: var(--card-radius);
   padding: 14px;
   background: var(--card-bg);
   border: 1px solid var(--border);
-  box-shadow: 0 14px 30px rgba(0,0,0,.4);
+  box-shadow: var(--shadow);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   border-left: 3px solid var(--cat-color, var(--accent));
-}
-/* 겹겹이 쌓인 시트 — 카드 뒤로 층층이 물러나는 스택 */
-.card-face:not(.back)::before,
-.card-face:not(.back)::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--cat-color, var(--accent));
-  box-shadow: 0 10px 20px rgba(0,0,0,.25);
-  pointer-events: none;
-  z-index: -1;
-}
-.card-face:not(.back)::before {
-  transform: translateZ(-11px) translate(5px, 6px);
-  filter: brightness(.8) saturate(.85);
-}
-.card-face:not(.back)::after {
-  transform: translateZ(-22px) translate(10px, 12px);
-  filter: brightness(.62) saturate(.7);
 }
 .card-face.back {
   position: absolute; inset: 0;
@@ -375,22 +368,7 @@ input[type=range]::-moz-range-thumb {
 /* search dim */
 .card.dimmed { opacity: .22; filter: grayscale(.6); }
 
-/* ---------- Category (z-axis) focus mode ---------- */
-.card.z-dim {
-  opacity: .14;
-  filter: grayscale(.7) blur(1px);
-  transition: opacity .35s var(--ease), filter .35s var(--ease);
-}
-.card.z-focus {
-  transition: transform .45s var(--ease);
-}
-.card.z-focus .card-face {
-  border-color: var(--cat-color, var(--accent));
-  box-shadow: 0 18px 44px rgba(0,0,0,.5), 0 0 0 1px var(--cat-color, var(--accent));
-}
-.app.zfocus .stage { cursor: ns-resize; }
-
-/* 분류 내비게이션 배지 */
+/* 대분류(Z축) 내비게이션 배지 */
 .z-nav {
   position: absolute;
   left: 50%; bottom: 26px;
@@ -418,16 +396,21 @@ input[type=range]::-moz-range-thumb {
   transition: color .15s, border-color .15s, background .15s;
 }
 .z-nav-btn:hover { color: var(--text); border-color: var(--border-strong); }
-.z-nav-body { display: flex; flex-direction: column; align-items: center; min-width: 76px; line-height: 1.25; }
-.z-nav-name { font-size: 14px; font-weight: 800; }
+.z-nav-act { font-size: 13px; }
+.z-nav-sep { width: 1px; height: 20px; background: var(--border); }
+.z-nav-body { display: flex; flex-direction: column; align-items: center; min-width: 84px; line-height: 1.25; }
+.z-nav-name { font-size: 14px; font-weight: 800; cursor: text; }
 .z-nav-idx { font-size: 11px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
 .z-nav-hint { font-size: 11px; color: var(--text-faint); padding-left: 4px; border-left: 1px solid var(--border); }
 
 /* ---------- Flat mode ---------- */
 .app.flat .stage { perspective: none; cursor: default; }
 .app.flat .scene { transform: none !important; transition: none; }
-.app.flat .board {
-  position: static; transform: none;
+.app.flat .board { position: static; transform: none; height: 100%; }
+/* 평면에선 활성 대분류 한 장만 펼쳐 보여줌 */
+.app.flat .group-board:not(.active) { display: none; }
+.app.flat .group-board.active {
+  position: static; transform: none !important; opacity: 1; filter: none;
   display: flex; gap: 22px; padding: 32px;
   height: 100%; overflow-x: auto; overflow-y: hidden; align-items: flex-start;
 }

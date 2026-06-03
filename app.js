@@ -1,6 +1,6 @@
 /* ===================================================================
-   TaskCube — 3D 큐브 업무 대시보드  (vanilla JS, no build)
-   X축=진행 단계 / Y축=단계 내 스택 / Z축=일의 범주(깊이)
+   TaskCube — 3D 업무 대시보드  (vanilla JS, no build)
+   X축=진행 단계 / Y축=단계 내 스택 / Z축=대분류(프로젝트) 깊이
    =================================================================== */
 (function () {
   "use strict";
@@ -9,10 +9,8 @@
   const STORE_KEY = "taskcube.board.v1";
   const COL_W = 290;
   const COL_GAP = 64;
-  const Z_STEP = 64; // category depth step (px)
+  const GROUP_Z_STEP = 560; // 대분류 한 칸당 깊이(px)
   const CATEGORIES = ["디자인", "개발", "버그", "문서", "리서치", "기획"];
-  const CATEGORY_Z = {}; // 첫 번째 범주 → 깊이 평면
-  CATEGORIES.forEach((c, i) => (CATEGORY_Z[c] = -i * Z_STEP));
 
   const ROT_MIN = -60, ROT_MAX = 60;
   const DRAG_THRESHOLD = 5;
@@ -47,31 +45,39 @@
   }
 
   // ---------- default seed ----------
+  function mkCard(title, cats, due, who, pri, note) {
+    return { id: uid("c"), title, categories: cats, due, assignee: who, priority: pri, note: note || "" };
+  }
+  // 표준 워크플로우(할일/진행중/검토/완료)에 카드를 분배해 대분류 보드 하나를 만든다
+  function mkGroup(name, buckets) {
+    const cards = {};
+    const stages = ["할 일", "진행 중", "검토", "완료"].map((sn, i) => {
+      const list = (buckets[i] || []).map((card) => { cards[card.id] = card; return card.id; });
+      return { id: uid("s"), name: sn, cardIds: list };
+    });
+    return { id: uid("g"), name, stages, cards };
+  }
   function seed() {
-    const mk = (title, cats, due, who, pri, note) =>
-      ({ id: uid("c"), title, categories: cats, due, assignee: who, priority: pri, note: note || "" });
-    const c = [
-      mk("랜딩 페이지 히어로 섹션 리디자인", ["디자인"], "2026-06-03", "민", "높음", "히어로 카피 A/B 테스트 결과 반영"),
-      mk("사용자 인터뷰 5건 정리 및 인사이트 도출", ["리서치", "기획"], "2026-06-08", "지", "보통"),
-      mk("결제 모듈 PG사 비교 자료", ["문서"], "2026-06-15", "수", "낮음"),
-      mk("OAuth 2.0 소셜 로그인 연동", ["개발"], "2026-06-01", "태", "높음", "구글/카카오/애플 우선"),
-      mk("디자인 시스템 v2 토큰 정리", ["디자인", "개발"], "2026-06-05", "민", "보통"),
-      mk("장바구니 수량 변경 시 합계 미갱신 버그", ["버그"], "2026-05-29", "태", "높음", "재현: 수량 +/- 연타 시"),
-      mk("프로젝트 초기 세팅 및 CI 파이프라인", ["개발", "문서"], "2026-05-20", "태", "보통"),
-      mk("브랜드 로고 및 컬러 가이드 확정", ["디자인"], "2026-05-15", "수", "낮음"),
-    ];
-    const cards = {}; c.forEach((x) => (cards[x.id] = x));
+    const home = mkGroup("집안일", [
+      [ mkCard("주말 장보기 목록 정리", ["기타"], "2026-06-07", "나", "보통", "우유, 계란, 세제"),
+        mkCard("욕실 청소", ["기타"], "2026-06-05", "나", "낮음") ],
+      [ mkCard("거실 정리 및 분리수거", ["기타"], "2026-06-03", "나", "보통") ],
+      [ mkCard("가계부 5월 결산 확인", ["문서"], "", "나", "낮음") ],
+      [ mkCard("에어컨 필터 청소", ["기타"], "2026-05-28", "나", "낮음") ],
+    ]);
+    const work = mkGroup("회사일", [
+      [ mkCard("랜딩 페이지 히어로 섹션 리디자인", ["디자인"], "2026-06-03", "민", "높음", "히어로 카피 A/B 테스트 결과 반영"),
+        mkCard("사용자 인터뷰 5건 정리 및 인사이트 도출", ["리서치", "기획"], "2026-06-08", "지", "보통"),
+        mkCard("결제 모듈 PG사 비교 자료", ["문서"], "2026-06-15", "수", "낮음") ],
+      [ mkCard("OAuth 2.0 소셜 로그인 연동", ["개발"], "2026-06-01", "태", "높음", "구글/카카오/애플 우선"),
+        mkCard("디자인 시스템 v2 토큰 정리", ["디자인", "개발"], "2026-06-05", "민", "보통") ],
+      [ mkCard("장바구니 수량 변경 시 합계 미갱신 버그", ["버그"], "2026-05-29", "태", "높음", "재현: 수량 +/- 연타 시") ],
+      [ mkCard("프로젝트 초기 세팅 및 CI 파이프라인", ["개발", "문서"], "2026-05-20", "태", "보통"),
+        mkCard("브랜드 로고 및 컬러 가이드 확정", ["디자인"], "2026-05-15", "수", "낮음") ],
+    ]);
     return {
-      version: 1,
-      board: {
-        stages: [
-          { id: uid("s"), name: "할 일", cardIds: [c[0].id, c[1].id, c[2].id] },
-          { id: uid("s"), name: "진행 중", cardIds: [c[3].id, c[4].id] },
-          { id: uid("s"), name: "검토", cardIds: [c[5].id] },
-          { id: uid("s"), name: "완료", cardIds: [c[6].id, c[7].id] },
-        ],
-        cards,
-      },
+      version: 2,
+      groups: [home, work],
       view: { rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0 },
     };
   }
@@ -84,10 +90,21 @@
       const raw = localStorage.getItem(STORE_KEY);
       if (!raw) return seed();
       const s = JSON.parse(raw);
-      if (!s || s.version !== 1 || !s.board || !s.board.stages) return seed();
+      // v1(단일 board) → v2(대분류 groups) 마이그레이션
+      if (s && s.version === 1 && s.board && s.board.stages) {
+        s.groups = [{ id: uid("g"), name: "기본", stages: s.board.stages, cards: s.board.cards }];
+        delete s.board;
+        s.version = 2;
+      }
+      if (!s || s.version !== 2 || !Array.isArray(s.groups) || !s.groups.length) return seed();
       s.view = Object.assign({ rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0 }, s.view);
+      s.view.focus = clamp(s.view.focus | 0, 0, s.groups.length - 1);
       return s;
     } catch (e) { return seed(); }
+  }
+  // 현재 활성 대분류(보드)
+  function activeGroup() {
+    return state.groups[clamp(state.view.focus | 0, 0, state.groups.length - 1)];
   }
   function save() {
     clearTimeout(saveTimer);
@@ -109,58 +126,72 @@
   //  RENDER
   // ===================================================================
   function render() {
-    const { stages, cards } = state.board;
-    const totalW = stages.length * COL_W + (stages.length - 1) * COL_GAP;
     board.innerHTML = "";
+    const focus = clamp(state.view.focus | 0, 0, state.groups.length - 1);
 
-    stages.forEach((stage, i) => {
-      const col = document.createElement("div");
-      col.className = "column";
-      col.dataset.stageId = stage.id;
-      col.style.setProperty("--cx", (i * (COL_W + COL_GAP) - totalW / 2) + "px");
+    // 대분류(보드)마다 group-board를 만들어 Z축 깊이로 배치
+    state.groups.forEach((group, gi) => {
+      const gb = document.createElement("div");
+      gb.className = "group-board" + (gi === focus ? " active" : "");
+      gb.dataset.groupId = group.id;
+      gb.style.setProperty("--gz", (-gi * GROUP_Z_STEP) + "px");
 
-      const inner = document.createElement("div");
-      inner.className = "column-inner";
-
-      // head
-      const head = document.createElement("div");
-      head.className = "column-head";
-      head.innerHTML =
-        `<span class="col-dot"></span>` +
-        `<input class="col-title" value="${esc(stage.name)}" maxlength="24" />` +
-        `<span class="col-count">${stage.cardIds.length}</span>` +
-        `<button class="col-del" title="단계 삭제"><svg class="icon"><use href="#i-close"/></svg></button>`;
-      inner.appendChild(head);
-
-      // card stack
-      const stack = document.createElement("div");
-      stack.className = "card-stack";
-      stack.dataset.stageId = stage.id;
-      stage.cardIds.forEach((cid) => {
-        const card = cards[cid];
-        if (card) stack.appendChild(buildCard(card));
-      });
-      inner.appendChild(stack);
-
-      // add card
-      const addBtn = document.createElement("button");
-      addBtn.className = "add-card";
-      addBtn.innerHTML = `<svg class="icon"><use href="#i-plus"/></svg> 카드 추가`;
-      addBtn.addEventListener("click", () => openEditor(null, stage.id));
-      inner.appendChild(addBtn);
-
-      // head events
-      const titleInput = head.querySelector(".col-title");
-      titleInput.addEventListener("change", () => { stage.name = titleInput.value.trim() || "제목 없음"; titleInput.value = stage.name; save(); });
-      titleInput.addEventListener("keydown", (e) => { if (e.key === "Enter") titleInput.blur(); });
-      head.querySelector(".col-del").addEventListener("click", () => deleteStage(stage.id));
-
-      col.appendChild(inner);
-      board.appendChild(col);
+      const stages = group.stages;
+      const totalW = stages.length * COL_W + (stages.length - 1) * COL_GAP;
+      stages.forEach((stage, i) => gb.appendChild(buildColumn(group, stage, i, totalW)));
+      board.appendChild(gb);
     });
 
+    applyView();
     applySearch();
     applyFocus();
+  }
+
+  function buildColumn(group, stage, i, totalW) {
+    const cards = group.cards;
+    const col = document.createElement("div");
+    col.className = "column";
+    col.dataset.stageId = stage.id;
+    col.style.setProperty("--cx", (i * (COL_W + COL_GAP) - totalW / 2) + "px");
+
+    const inner = document.createElement("div");
+    inner.className = "column-inner";
+
+    // head
+    const head = document.createElement("div");
+    head.className = "column-head";
+    head.innerHTML =
+      `<span class="col-dot"></span>` +
+      `<input class="col-title" value="${esc(stage.name)}" maxlength="24" />` +
+      `<span class="col-count">${stage.cardIds.length}</span>` +
+      `<button class="col-del" title="단계 삭제"><svg class="icon"><use href="#i-close"/></svg></button>`;
+    inner.appendChild(head);
+
+    // card stack
+    const stack = document.createElement("div");
+    stack.className = "card-stack";
+    stack.dataset.stageId = stage.id;
+    stage.cardIds.forEach((cid) => {
+      const card = cards[cid];
+      if (card) stack.appendChild(buildCard(card));
+    });
+    inner.appendChild(stack);
+
+    // add card
+    const addBtn = document.createElement("button");
+    addBtn.className = "add-card";
+    addBtn.innerHTML = `<svg class="icon"><use href="#i-plus"/></svg> 카드 추가`;
+    addBtn.addEventListener("click", () => openEditor(null, stage.id));
+    inner.appendChild(addBtn);
+
+    // head events
+    const titleInput = head.querySelector(".col-title");
+    titleInput.addEventListener("change", () => { stage.name = titleInput.value.trim() || "제목 없음"; titleInput.value = stage.name; save(); });
+    titleInput.addEventListener("keydown", (e) => { if (e.key === "Enter") titleInput.blur(); });
+    head.querySelector(".col-del").addEventListener("click", () => deleteStage(stage.id));
+
+    col.appendChild(inner);
+    return col;
   }
 
   function buildCard(card) {
@@ -168,8 +199,6 @@
     el.className = "card";
     el.dataset.cardId = card.id;
     const primary = card.categories[0] || "기타";
-    el.dataset.catIndex = CATEGORIES.indexOf(primary); // 분류 깊이 평면 인덱스 (-1 = 기타)
-    el.style.setProperty("--cz", (CATEGORY_Z[primary] || 0) + "px");
     el.style.setProperty("--cat-color", catColor(primary));
 
     const chips = card.categories.map((cat) =>
@@ -222,20 +251,22 @@
   //  CRUD
   // ===================================================================
   function addStage() {
-    state.board.stages.push({ id: uid("s"), name: "새 단계", cardIds: [] });
+    activeGroup().stages.push({ id: uid("s"), name: "새 단계", cardIds: [] });
     save(); render();
   }
   function deleteStage(id) {
-    const st = state.board.stages.find((s) => s.id === id);
+    const g = activeGroup();
+    const st = g.stages.find((s) => s.id === id);
     if (!st) return;
     if (st.cardIds.length && !confirm(`'${st.name}' 단계의 카드 ${st.cardIds.length}개도 함께 삭제됩니다. 계속할까요?`)) return;
-    st.cardIds.forEach((cid) => delete state.board.cards[cid]);
-    state.board.stages = state.board.stages.filter((s) => s.id !== id);
+    st.cardIds.forEach((cid) => delete g.cards[cid]);
+    g.stages = g.stages.filter((s) => s.id !== id);
     save(); render();
   }
   function deleteCard(id) {
-    delete state.board.cards[id];
-    state.board.stages.forEach((s) => (s.cardIds = s.cardIds.filter((c) => c !== id)));
+    const g = activeGroup();
+    delete g.cards[id];
+    g.stages.forEach((s) => (s.cardIds = s.cardIds.filter((c) => c !== id)));
     save(); render();
   }
 
@@ -260,7 +291,7 @@
 
   function openEditor(cardId, stageId) {
     editingId = cardId; editingStageId = stageId;
-    const c = cardId ? state.board.cards[cardId] : null;
+    const c = cardId ? activeGroup().cards[cardId] : null;
     $("#modalTitle").textContent = cardId ? "카드 편집" : "새 카드";
     $("#f-title").value = c ? c.title : "";
     $("#f-categories").value = c ? c.categories.join(", ") : "";
@@ -284,12 +315,13 @@
       note: $("#f-note").value.trim(),
     };
     if (!data.categories.length) data.categories = ["기타"];
+    const g = activeGroup();
     if (editingId) {
-      Object.assign(state.board.cards[editingId], data);
+      Object.assign(g.cards[editingId], data);
     } else {
       const id = uid("c");
-      state.board.cards[id] = Object.assign({ id }, data);
-      const st = state.board.stages.find((s) => s.id === editingStageId) || state.board.stages[0];
+      g.cards[id] = Object.assign({ id }, data);
+      const st = g.stages.find((s) => s.id === editingStageId) || g.stages[0];
       st.cardIds.push(id);
     }
     closeEditor(); save(); render();
@@ -418,10 +450,11 @@
     const siblings = [...targetStackEl.children].filter((n) => n.classList.contains("card") || n === ph);
     const index = siblings.indexOf(ph);
 
-    // commit to data model
+    // commit to data model (활성 대분류 내에서만 이동)
     const cid = drag.cardId;
-    state.board.stages.forEach((s) => (s.cardIds = s.cardIds.filter((c) => c !== cid)));
-    const target = state.board.stages.find((s) => s.id === targetStageId);
+    const g = activeGroup();
+    g.stages.forEach((s) => (s.cardIds = s.cardIds.filter((c) => c !== cid)));
+    const target = g.stages.find((s) => s.id === targetStageId);
     if (target) target.cardIds.splice(index, 0, cid);
 
     // cleanup visual
@@ -444,13 +477,9 @@
   // ===================================================================
   const rotXEl = $("#rotX"), rotYEl = $("#rotY");
 
-  const Z_TURN = 7; // 분류 한 단계 이동 시 추가 회전(deg) — "회전하며 움직이는" 느낌
   function applyView() {
     if (state.view.mode === "flat") return; // 평면은 CSS가 처리
-    const f = state.view.mode === "category" ? clamp(state.view.focus | 0, 0, CATEGORIES.length - 1) : 0;
-    const tz = -120 + f * Z_STEP;            // 포커스된 분류 평면을 카메라 앞으로
-    const ry = state.view.rotY + f * (state.view.mode === "category" ? Z_TURN : 0);
-    scene.style.transform = `translateZ(${tz}px) rotateX(${state.view.rotX}deg) rotateY(${ry}deg)`;
+    scene.style.transform = `translateZ(-120px) rotateX(${state.view.rotX}deg) rotateY(${state.view.rotY}deg)`;
   }
   function setRotation(rx, ry, sync) {
     state.view.rotX = clamp(Math.round(rx), ROT_MIN, ROT_MAX);
@@ -484,11 +513,10 @@
   stageEl.addEventListener("pointerup", endBgDrag);
   stageEl.addEventListener("pointercancel", endBgDrag);
 
-  // mode toggle
+  // mode toggle (입체 / 평면)
   function setMode(mode) {
     state.view.mode = mode;
     app.classList.toggle("flat", mode === "flat");
-    app.classList.toggle("zfocus", mode === "category");
     [...document.querySelectorAll(".mode-btn")].forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
     if (mode !== "flat") { scene.classList.remove("no-anim"); applyView(); }
     applyFocus();
@@ -498,52 +526,78 @@
     const b = e.target.closest(".mode-btn"); if (b) setMode(b.dataset.mode);
   });
 
-  // ---- 분류(z축) 포커스 내비게이션 ----
+  // ===================================================================
+  //  Z축 — 대분류(프로젝트) 깊이 전환
+  // ===================================================================
   const zBadge = $("#zNav"), zName = $("#zNavName"), zIdx = $("#zNavIdx");
+  // 활성 대분류는 맨 앞 선명, 나머지는 Z축 뒤로 + 위로 빼꼼 + 흐리게
   function applyFocus() {
-    const on = state.view.mode === "category";
-    const f = clamp(state.view.focus | 0, 0, CATEGORIES.length - 1);
-    document.querySelectorAll(".card").forEach((el) => {
-      const ci = +el.dataset.catIndex;
-      el.classList.toggle("z-dim", on && ci !== f);
-      el.classList.toggle("z-focus", on && ci === f);
+    const focus = clamp(state.view.focus | 0, 0, state.groups.length - 1);
+    const boards = [...document.querySelectorAll(".group-board")];
+    boards.forEach((gb, gi) => {
+      const rel = gi - focus, dist = Math.abs(rel);
+      gb.style.setProperty("--gz", (-dist * GROUP_Z_STEP) + "px");
+      gb.style.setProperty("--gy", (-dist * 64) + "px");
+      gb.classList.toggle("active", rel === 0);
     });
     if (zBadge) {
-      zBadge.hidden = !on;
-      if (on) {
-        const name = CATEGORIES[f];
-        zName.textContent = name;
-        zName.style.color = catColor(name);
-        zIdx.textContent = (f + 1) + " / " + CATEGORIES.length;
-      }
+      const g = state.groups[focus];
+      zName.textContent = g ? g.name : "";
+      zIdx.textContent = (focus + 1) + " / " + state.groups.length;
     }
   }
   function setFocus(next) {
-    const f = clamp(next, 0, CATEGORIES.length - 1);
+    const f = clamp(next, 0, state.groups.length - 1);
     if (f === (state.view.focus | 0)) return;
     state.view.focus = f;
-    applyView(); applyFocus(); save();
+    applyFocus(); save();
   }
-  // 분류 모드에서만 휠이 z축을 회전·이동시킴 (그 외엔 평소대로 y축 스크롤)
+  // 입체 모드에서 휠 = 대분류 Z축 전환 (평면 모드에선 일반 스크롤)
   let wheelLock = false;
   stageEl.addEventListener("wheel", (e) => {
-    if (state.view.mode !== "category") return;
+    if (state.view.mode === "flat") return;
     e.preventDefault();
     if (wheelLock) return;
     wheelLock = true;
-    setTimeout(() => (wheelLock = false), 260); // 한 제스처당 한 단계
+    setTimeout(() => (wheelLock = false), 320); // 한 제스처당 한 칸
     setFocus((state.view.focus | 0) + (e.deltaY > 0 ? 1 : -1));
   }, { passive: false });
-  // 배지의 위/아래 버튼
+  // 배지의 이전/다음 대분류
   $("#zNavPrev").addEventListener("click", () => setFocus((state.view.focus | 0) - 1));
   $("#zNavNext").addEventListener("click", () => setFocus((state.view.focus | 0) + 1));
-  // 분류 모드에서 화살표 키로도 이동
+  // 화살표 키로도 대분류 전환
   document.addEventListener("keydown", (e) => {
-    if (state.view.mode !== "category") return;
+    if (!overlay.hidden) return;
     if (e.target.matches("input, textarea, select")) return;
     if (e.key === "ArrowUp" || e.key === "ArrowLeft") { e.preventDefault(); setFocus((state.view.focus | 0) - 1); }
     else if (e.key === "ArrowDown" || e.key === "ArrowRight") { e.preventDefault(); setFocus((state.view.focus | 0) + 1); }
   });
+  // 대분류 추가 / 이름변경 / 삭제
+  $("#zNavName").addEventListener("dblclick", renameGroup);
+  $("#zNavAdd").addEventListener("click", addGroup);
+  $("#zNavDel").addEventListener("click", deleteGroup);
+  function addGroup() {
+    const name = (prompt("새 대분류 이름", "새 대분류") || "").trim();
+    if (!name) return;
+    const g = { id: uid("g"), name, stages: ["할 일", "진행 중", "검토", "완료"].map((sn) => ({ id: uid("s"), name: sn, cardIds: [] })), cards: {} };
+    state.groups.push(g);
+    state.view.focus = state.groups.length - 1;
+    save(); render();
+  }
+  function renameGroup() {
+    const g = activeGroup();
+    const name = (prompt("대분류 이름 변경", g.name) || "").trim();
+    if (!name) return;
+    g.name = name; save(); applyFocus();
+  }
+  function deleteGroup() {
+    if (state.groups.length <= 1) { toast("대분류는 최소 1개가 필요합니다."); return; }
+    const g = activeGroup();
+    if (!confirm(`대분류 '${g.name}'와 그 안의 모든 카드를 삭제할까요?`)) return;
+    state.groups.splice(state.view.focus | 0, 1);
+    state.view.focus = clamp(state.view.focus | 0, 0, state.groups.length - 1);
+    save(); render();
+  }
 
   // reset view
   $("#resetView").addEventListener("click", () => setRotation(-14, 16, true));
@@ -564,10 +618,14 @@
 
   // search
   const searchEl = $("#search");
+  function findCard(id) {
+    for (const g of state.groups) if (g.cards[id]) return g.cards[id];
+    return null;
+  }
   function applySearch() {
     const q = (state.view.search || "").trim().toLowerCase();
     document.querySelectorAll(".card").forEach((el) => {
-      const card = state.board.cards[el.dataset.cardId];
+      const card = findCard(el.dataset.cardId);
       if (!card) return;
       const hay = (card.title + " " + card.categories.join(" ") + " " + (card.assignee || "")).toLowerCase();
       el.classList.toggle("dimmed", q.length > 0 && !hay.includes(q));
@@ -621,10 +679,11 @@
     return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
   }
   function exportCsv() {
+    const g = activeGroup();
     const rows = [CSV_COLS.slice()];
-    state.board.stages.forEach((st) => {
+    g.stages.forEach((st) => {
       st.cardIds.forEach((cid) => {
-        const c = state.board.cards[cid]; if (!c) return;
+        const c = g.cards[cid]; if (!c) return;
         rows.push([st.name, c.title, c.categories.join("|"), c.due || "", c.assignee || "", c.priority || "", c.note || ""]);
       });
     });
@@ -671,10 +730,11 @@
         priority: ["높음", "보통", "낮음"].includes(pri) ? pri : "보통",
         note: get(row, "note"),
       };
-      const stageName = get(row, "stage") || (state.board.stages[0] && state.board.stages[0].name) || "할 일";
-      let st = state.board.stages.find((s) => s.name === stageName);
-      if (!st) { st = { id: uid("s"), name: stageName, cardIds: [] }; state.board.stages.push(st); }
-      state.board.cards[card.id] = card; st.cardIds.push(card.id); count++;
+      const g = activeGroup();
+      const stageName = get(row, "stage") || (g.stages[0] && g.stages[0].name) || "할 일";
+      let st = g.stages.find((s) => s.name === stageName);
+      if (!st) { st = { id: uid("s"), name: stageName, cardIds: [] }; g.stages.push(st); }
+      g.cards[card.id] = card; st.cardIds.push(card.id); count++;
     }
     flush(); render();
     toast(count ? `${count}개 카드를 가져왔습니다` : "가져올 카드가 없습니다");
@@ -693,17 +753,19 @@
     return decodeURIComponent(escape(atob(b64)));
   }
   function makeShareUrl() {
-    const code = b64encodeUtf8(JSON.stringify({ v: 1, board: state.board }));
+    const g = activeGroup();
+    const code = b64encodeUtf8(JSON.stringify({ v: 1, board: { stages: g.stages, cards: g.cards } }));
     return { code, url: location.origin + location.pathname + "#share=" + code };
   }
   function mergeBoard(incoming) {
+    const g = activeGroup();
     incoming.stages.forEach((inStage) => {
-      let target = state.board.stages.find((s) => s.name === inStage.name);
-      if (!target) { target = { id: uid("s"), name: inStage.name, cardIds: [] }; state.board.stages.push(target); }
+      let target = g.stages.find((s) => s.name === inStage.name);
+      if (!target) { target = { id: uid("s"), name: inStage.name, cardIds: [] }; g.stages.push(target); }
       (inStage.cardIds || []).forEach((oldId) => {
         const c = incoming.cards[oldId]; if (!c) return;
         const nid = uid("c");
-        state.board.cards[nid] = Object.assign({}, c, { id: nid });
+        g.cards[nid] = Object.assign({}, c, { id: nid });
         target.cardIds.push(nid);
       });
     });
@@ -764,6 +826,7 @@
     rotXEl.value = state.view.rotX;
     rotYEl.value = state.view.rotY;
     searchEl.value = state.view.search || "";
+    if (state.view.mode !== "flat") state.view.mode = "3d"; // 구버전 'category' 모드 정리
     setMode(state.view.mode);
     checkSharedHash();
     render();
