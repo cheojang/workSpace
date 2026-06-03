@@ -375,6 +375,54 @@ input[type=range]::-moz-range-thumb {
 /* search dim */
 .card.dimmed { opacity: .22; filter: grayscale(.6); }
 
+/* ---------- Category (z-axis) focus mode ---------- */
+.card.z-dim {
+  opacity: .14;
+  filter: grayscale(.7) blur(1px);
+  transition: opacity .35s var(--ease), filter .35s var(--ease);
+}
+.card.z-focus {
+  transition: transform .45s var(--ease);
+}
+.card.z-focus .card-face {
+  border-color: var(--cat-color, var(--accent));
+  box-shadow: 0 18px 44px rgba(0,0,0,.5), 0 0 0 1px var(--cat-color, var(--accent));
+}
+.app.zfocus .stage { cursor: ns-resize; }
+
+/* 분류 내비게이션 배지 */
+.z-nav {
+  position: absolute;
+  left: 50%; bottom: 26px;
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 14px;
+  background: var(--header-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 30;
+  user-select: none;
+}
+.z-nav-btn {
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  border: 1px solid var(--border);
+  background: var(--chip-bg);
+  color: var(--text-dim);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 10px; line-height: 1;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.z-nav-btn:hover { color: var(--text); border-color: var(--border-strong); }
+.z-nav-body { display: flex; flex-direction: column; align-items: center; min-width: 76px; line-height: 1.25; }
+.z-nav-name { font-size: 14px; font-weight: 800; }
+.z-nav-idx { font-size: 11px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.z-nav-hint { font-size: 11px; color: var(--text-faint); padding-left: 4px; border-left: 1px solid var(--border); }
+
 /* ---------- Flat mode ---------- */
 .app.flat .stage { perspective: none; cursor: default; }
 .app.flat .scene { transform: none !important; transition: none; }

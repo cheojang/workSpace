@@ -72,7 +72,7 @@
         ],
         cards,
       },
-      view: { rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "" },
+      view: { rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0 },
     };
   }
 
@@ -85,7 +85,7 @@
       if (!raw) return seed();
       const s = JSON.parse(raw);
       if (!s || s.version !== 1 || !s.board || !s.board.stages) return seed();
-      s.view = Object.assign({ rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "" }, s.view);
+      s.view = Object.assign({ rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0 }, s.view);
       return s;
     } catch (e) { return seed(); }
   }
@@ -160,6 +160,7 @@
     });
 
     applySearch();
+    applyFocus();
   }
 
   function buildCard(card) {
@@ -167,6 +168,7 @@
     el.className = "card";
     el.dataset.cardId = card.id;
     const primary = card.categories[0] || "기타";
+    el.dataset.catIndex = CATEGORIES.indexOf(primary); // 분류 깊이 평면 인덱스 (-1 = 기타)
     el.style.setProperty("--cz", (CATEGORY_Z[primary] || 0) + "px");
     el.style.setProperty("--cat-color", catColor(primary));
 
@@ -442,13 +444,18 @@
   // ===================================================================
   const rotXEl = $("#rotX"), rotYEl = $("#rotY");
 
-  function applyRotation() {
-    scene.style.transform = `translateZ(-120px) rotateX(${state.view.rotX}deg) rotateY(${state.view.rotY}deg)`;
+  const Z_TURN = 7; // 분류 한 단계 이동 시 추가 회전(deg) — "회전하며 움직이는" 느낌
+  function applyView() {
+    if (state.view.mode === "flat") return; // 평면은 CSS가 처리
+    const f = state.view.mode === "category" ? clamp(state.view.focus | 0, 0, CATEGORIES.length - 1) : 0;
+    const tz = -120 + f * Z_STEP;            // 포커스된 분류 평면을 카메라 앞으로
+    const ry = state.view.rotY + f * (state.view.mode === "category" ? Z_TURN : 0);
+    scene.style.transform = `translateZ(${tz}px) rotateX(${state.view.rotX}deg) rotateY(${ry}deg)`;
   }
   function setRotation(rx, ry, sync) {
     state.view.rotX = clamp(Math.round(rx), ROT_MIN, ROT_MAX);
     state.view.rotY = clamp(Math.round(ry), ROT_MIN, ROT_MAX);
-    if (state.view.mode === "3d") applyRotation();
+    if (state.view.mode !== "flat") applyView();
     if (sync !== false) { rotXEl.value = state.view.rotX; rotYEl.value = state.view.rotY; }
     save();
   }
@@ -481,12 +488,61 @@
   function setMode(mode) {
     state.view.mode = mode;
     app.classList.toggle("flat", mode === "flat");
+    app.classList.toggle("zfocus", mode === "category");
     [...document.querySelectorAll(".mode-btn")].forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
-    if (mode === "3d") { scene.classList.remove("no-anim"); applyRotation(); }
+    if (mode !== "flat") { scene.classList.remove("no-anim"); applyView(); }
+    applyFocus();
     save();
   }
   $("#modeToggle").addEventListener("click", (e) => {
     const b = e.target.closest(".mode-btn"); if (b) setMode(b.dataset.mode);
+  });
+
+  // ---- 분류(z축) 포커스 내비게이션 ----
+  const zBadge = $("#zNav"), zName = $("#zNavName"), zIdx = $("#zNavIdx");
+  function applyFocus() {
+    const on = state.view.mode === "category";
+    const f = clamp(state.view.focus | 0, 0, CATEGORIES.length - 1);
+    document.querySelectorAll(".card").forEach((el) => {
+      const ci = +el.dataset.catIndex;
+      el.classList.toggle("z-dim", on && ci !== f);
+      el.classList.toggle("z-focus", on && ci === f);
+    });
+    if (zBadge) {
+      zBadge.hidden = !on;
+      if (on) {
+        const name = CATEGORIES[f];
+        zName.textContent = name;
+        zName.style.color = catColor(name);
+        zIdx.textContent = (f + 1) + " / " + CATEGORIES.length;
+      }
+    }
+  }
+  function setFocus(next) {
+    const f = clamp(next, 0, CATEGORIES.length - 1);
+    if (f === (state.view.focus | 0)) return;
+    state.view.focus = f;
+    applyView(); applyFocus(); save();
+  }
+  // 분류 모드에서만 휠이 z축을 회전·이동시킴 (그 외엔 평소대로 y축 스크롤)
+  let wheelLock = false;
+  stageEl.addEventListener("wheel", (e) => {
+    if (state.view.mode !== "category") return;
+    e.preventDefault();
+    if (wheelLock) return;
+    wheelLock = true;
+    setTimeout(() => (wheelLock = false), 260); // 한 제스처당 한 단계
+    setFocus((state.view.focus | 0) + (e.deltaY > 0 ? 1 : -1));
+  }, { passive: false });
+  // 배지의 위/아래 버튼
+  $("#zNavPrev").addEventListener("click", () => setFocus((state.view.focus | 0) - 1));
+  $("#zNavNext").addEventListener("click", () => setFocus((state.view.focus | 0) + 1));
+  // 분류 모드에서 화살표 키로도 이동
+  document.addEventListener("keydown", (e) => {
+    if (state.view.mode !== "category") return;
+    if (e.target.matches("input, textarea, select")) return;
+    if (e.key === "ArrowUp" || e.key === "ArrowLeft") { e.preventDefault(); setFocus((state.view.focus | 0) - 1); }
+    else if (e.key === "ArrowDown" || e.key === "ArrowRight") { e.preventDefault(); setFocus((state.view.focus | 0) + 1); }
   });
 
   // reset view
@@ -709,7 +765,6 @@
     rotYEl.value = state.view.rotY;
     searchEl.value = state.view.search || "";
     setMode(state.view.mode);
-    if (state.view.mode === "3d") applyRotation();
     checkSharedHash();
     render();
   }
