@@ -270,14 +270,37 @@ input[type=range]::-moz-range-thumb {
 
 .card-face {
   position: relative;
+  transform-style: preserve-3d;
   border-radius: var(--card-radius);
   padding: 14px;
   background: var(--card-bg);
   border: 1px solid var(--border);
-  box-shadow: 0 10px 26px rgba(0,0,0,.28);
+  box-shadow: 0 14px 30px rgba(0,0,0,.4);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   border-left: 3px solid var(--cat-color, var(--accent));
+}
+/* 겹겹이 쌓인 시트 — 카드 뒤로 층층이 물러나는 스택 */
+.card-face:not(.back)::before,
+.card-face:not(.back)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--cat-color, var(--accent));
+  box-shadow: 0 10px 20px rgba(0,0,0,.25);
+  pointer-events: none;
+  z-index: -1;
+}
+.card-face:not(.back)::before {
+  transform: translateZ(-11px) translate(5px, 6px);
+  filter: brightness(.8) saturate(.85);
+}
+.card-face:not(.back)::after {
+  transform: translateZ(-22px) translate(10px, 12px);
+  filter: brightness(.62) saturate(.7);
 }
 .card-face.back {
   position: absolute; inset: 0;
