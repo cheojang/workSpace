@@ -78,7 +78,7 @@
     return {
       version: 2,
       groups: [home, work],
-      view: { rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0, panX: 0, panY: 0 },
+      view: { rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0, zoom: 1 },
     };
   }
 
@@ -97,7 +97,7 @@
         s.version = 2;
       }
       if (!s || s.version !== 2 || !Array.isArray(s.groups) || !s.groups.length) return seed();
-      s.view = Object.assign({ rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0, panX: 0, panY: 0 }, s.view);
+      s.view = Object.assign({ rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0, zoom: 1 }, s.view);
       s.view.focus = clamp(s.view.focus | 0, 0, s.groups.length - 1);
       return s;
     } catch (e) { return seed(); }
@@ -467,11 +467,11 @@
 
   function applyView() {
     if (state.view.mode === "flat") return; // 평면은 CSS가 처리
-    const px = state.view.panX || 0, py = state.view.panY || 0;
-    scene.style.transform = `translate(${px}px, ${py}px) translateZ(-120px) rotateX(${state.view.rotX}deg) rotateY(${state.view.rotY}deg)`;
+    const z = state.view.zoom || 1;
+    scene.style.transform = `scale(${z}) translateZ(-120px) rotateX(${state.view.rotX}deg) rotateY(${state.view.rotY}deg)`;
   }
   function resetView() {
-    state.view.panX = 0; state.view.panY = 0;
+    state.view.zoom = 1;
     setRotation(-14, 16, true); // applyView + save 포함
   }
   function setRotation(rx, ry, sync) {
@@ -490,21 +490,20 @@
     if (state.view.mode === "flat") return;
     if (e.target.closest(".column") || e.target.closest(".card")) return;
     e.preventDefault(); // 텍스트 선택 방지
-    bgDrag = { x: e.clientX, y: e.clientY, px: state.view.panX || 0, py: state.view.panY || 0 };
-    stageEl.classList.add("panning");
+    bgDrag = { x: e.clientX, y: e.clientY, rx: state.view.rotX, ry: state.view.rotY };
+    stageEl.classList.add("rotating");
     scene.classList.add("no-anim");
     stageEl.setPointerCapture(e.pointerId);
   });
   stageEl.addEventListener("pointermove", (e) => {
     if (!bgDrag) return;
-    // 빈 공간 드래그 = 화면 이동(패닝)
-    state.view.panX = bgDrag.px + (e.clientX - bgDrag.x);
-    state.view.panY = bgDrag.py + (e.clientY - bgDrag.y);
-    applyView();
+    // 빈 공간 드래그 = 시점 회전
+    const dx = e.clientX - bgDrag.x, dy = e.clientY - bgDrag.y;
+    setRotation(bgDrag.rx - dy * 0.35, bgDrag.ry + dx * 0.35, true);
   });
   function endBgDrag() {
     if (!bgDrag) return;
-    bgDrag = null; stageEl.classList.remove("panning"); scene.classList.remove("no-anim"); save();
+    bgDrag = null; stageEl.classList.remove("rotating"); scene.classList.remove("no-anim");
   }
   stageEl.addEventListener("pointerup", endBgDrag);
   stageEl.addEventListener("pointercancel", endBgDrag);
@@ -553,17 +552,17 @@
     state.view.focus = f;
     applyFocus(); save();
   }
-  // 입체 모드에서 휠 = 대분류 Z축 전환 (평면 모드에선 일반 스크롤)
-  let wheelLock = false;
+  // 입체 모드에서 휠 = 줌 인/아웃 (평면 모드에선 일반 스크롤)
+  const ZOOM_MIN = 0.4, ZOOM_MAX = 2.2;
   stageEl.addEventListener("wheel", (e) => {
     if (state.view.mode === "flat") return;
     e.preventDefault();
-    if (wheelLock) return;
-    wheelLock = true;
-    setTimeout(() => (wheelLock = false), 320); // 한 제스처당 한 칸
-    setFocus((state.view.focus | 0) + (e.deltaY > 0 ? 1 : -1));
+    const factor = e.deltaY > 0 ? 0.9 : 1.1;
+    state.view.zoom = clamp((state.view.zoom || 1) * factor, ZOOM_MIN, ZOOM_MAX);
+    applyView();
+    save();
   }, { passive: false });
-  // 배지의 이전/다음 대분류
+  // 상단 네비의 이전/다음 대분류
   $("#zNavPrev").addEventListener("click", () => setFocus((state.view.focus | 0) - 1));
   $("#zNavNext").addEventListener("click", () => setFocus((state.view.focus | 0) + 1));
   // 화살표 키로도 대분류 전환
