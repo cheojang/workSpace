@@ -78,7 +78,7 @@
     return {
       version: 2,
       groups: [home, work],
-      view: { rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0 },
+      view: { rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0, panX: 0, panY: 0 },
     };
   }
 
@@ -97,7 +97,7 @@
         s.version = 2;
       }
       if (!s || s.version !== 2 || !Array.isArray(s.groups) || !s.groups.length) return seed();
-      s.view = Object.assign({ rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0 }, s.view);
+      s.view = Object.assign({ rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0, panX: 0, panY: 0 }, s.view);
       s.view.focus = clamp(s.view.focus | 0, 0, s.groups.length - 1);
       return s;
     } catch (e) { return seed(); }
@@ -467,7 +467,12 @@
 
   function applyView() {
     if (state.view.mode === "flat") return; // 평면은 CSS가 처리
-    scene.style.transform = `translateZ(-120px) rotateX(${state.view.rotX}deg) rotateY(${state.view.rotY}deg)`;
+    const px = state.view.panX || 0, py = state.view.panY || 0;
+    scene.style.transform = `translate(${px}px, ${py}px) translateZ(-120px) rotateX(${state.view.rotX}deg) rotateY(${state.view.rotY}deg)`;
+  }
+  function resetView() {
+    state.view.panX = 0; state.view.panY = 0;
+    setRotation(-14, 16, true); // applyView + save 포함
   }
   function setRotation(rx, ry, sync) {
     state.view.rotX = clamp(Math.round(rx), ROT_MIN, ROT_MAX);
@@ -484,26 +489,29 @@
   stageEl.addEventListener("pointerdown", (e) => {
     if (state.view.mode === "flat") return;
     if (e.target.closest(".column") || e.target.closest(".card")) return;
-    bgDrag = { x: e.clientX, y: e.clientY, rx: state.view.rotX, ry: state.view.rotY };
-    stageEl.classList.add("rotating");
+    e.preventDefault(); // 텍스트 선택 방지
+    bgDrag = { x: e.clientX, y: e.clientY, px: state.view.panX || 0, py: state.view.panY || 0 };
+    stageEl.classList.add("panning");
     scene.classList.add("no-anim");
     stageEl.setPointerCapture(e.pointerId);
   });
   stageEl.addEventListener("pointermove", (e) => {
     if (!bgDrag) return;
-    const dx = e.clientX - bgDrag.x, dy = e.clientY - bgDrag.y;
-    setRotation(bgDrag.rx - dy * 0.35, bgDrag.ry + dx * 0.35, true);
+    // 빈 공간 드래그 = 화면 이동(패닝)
+    state.view.panX = bgDrag.px + (e.clientX - bgDrag.x);
+    state.view.panY = bgDrag.py + (e.clientY - bgDrag.y);
+    applyView();
   });
   function endBgDrag() {
     if (!bgDrag) return;
-    bgDrag = null; stageEl.classList.remove("rotating"); scene.classList.remove("no-anim");
+    bgDrag = null; stageEl.classList.remove("panning"); scene.classList.remove("no-anim"); save();
   }
   stageEl.addEventListener("pointerup", endBgDrag);
   stageEl.addEventListener("pointercancel", endBgDrag);
-  // 빈 공간 더블클릭 → 기본 시점으로 복귀
+  // 빈 공간 더블클릭 → 위치·시점 복귀
   stageEl.addEventListener("dblclick", (e) => {
     if (e.target.closest(".card") || e.target.closest(".column")) return;
-    setRotation(-14, 16, true);
+    resetView();
   });
 
   // mode toggle (입체 / 평면)
@@ -593,7 +601,7 @@
   }
 
   // reset view
-  $("#resetView").addEventListener("click", () => setRotation(-14, 16, true));
+  $("#resetView").addEventListener("click", resetView);
 
   // theme
   function setTheme(t) {

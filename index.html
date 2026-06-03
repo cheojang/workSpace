@@ -44,17 +44,20 @@
         </div>
       </div>
 
+      <!-- 대분류(Z축) 네비게이션 — 상단 -->
+      <div class="group-nav" id="zNav">
+        <button class="gnav-btn" id="zNavPrev" title="앞 대분류">◀</button>
+        <div class="gnav-body">
+          <span class="gnav-name" id="zNavName" title="더블클릭으로 이름 변경">대분류</span>
+          <span class="gnav-idx" id="zNavIdx">1 / 1</span>
+        </div>
+        <button class="gnav-btn" id="zNavNext" title="뒤 대분류">▶</button>
+        <button class="gnav-btn gnav-del" id="zNavDel" title="현재 대분류 삭제"><svg class="icon"><use href="#i-trash"/></svg></button>
+      </div>
+
       <div class="search">
         <svg class="icon"><use href="#i-search"/></svg>
         <input type="text" id="search" placeholder="카드 검색..." autocomplete="off" />
-      </div>
-
-      <div class="viewpoint" id="viewpoint">
-        <span class="vp-label">시점</span>
-        <div class="vp-rows">
-          <label class="vp-row"><span>X</span><input type="range" id="rotX" min="-60" max="60" step="1" /></label>
-          <label class="vp-row"><span>Y</span><input type="range" id="rotY" min="-60" max="60" step="1" /></label>
-        </div>
       </div>
 
       <div class="mode-toggle" id="modeToggle">
@@ -62,7 +65,7 @@
         <button class="mode-btn" data-mode="flat">평면</button>
       </div>
 
-      <button class="icon-btn" id="resetView" title="시점 초기화"><svg class="icon"><use href="#i-reset"/></svg></button>
+      <button class="icon-btn" id="resetView" title="시점·위치 초기화"><svg class="icon"><use href="#i-reset"/></svg></button>
       <button class="icon-btn" id="themeToggle" title="테마 전환"><svg class="icon theme-icon-dark"><use href="#i-sun"/></svg><svg class="icon theme-icon-light"><use href="#i-moon"/></svg></button>
 
       <div class="menu-wrap">
@@ -75,6 +78,7 @@
         </div>
       </div>
 
+      <button class="add-stage-btn alt" id="zNavAdd"><svg class="icon"><use href="#i-plus"/></svg> 분류 추가</button>
       <button class="add-stage-btn" id="addStage"><svg class="icon"><use href="#i-plus"/></svg> 단계 추가</button>
     </header>
 
@@ -86,29 +90,24 @@
         <div class="board" id="board"><!-- columns injected here --></div>
         <div class="ad-floor" id="adFloor" aria-hidden="true"><!-- Phase 2: ad slots --></div>
       </div>
-
-      <!-- 대분류(Z축) 내비게이션 -->
-      <div class="z-nav" id="zNav">
-        <span class="z-nav-label">대분류</span>
-        <button class="z-nav-btn" id="zNavPrev" title="앞 대분류 (↑)">▲</button>
-        <div class="z-nav-body">
-          <span class="z-nav-name" id="zNavName" title="더블클릭으로 이름 변경">대분류</span>
-          <span class="z-nav-idx" id="zNavIdx">1 / 1</span>
-        </div>
-        <button class="z-nav-btn" id="zNavNext" title="뒤 대분류 (↓)">▼</button>
-        <span class="z-nav-sep"></span>
-        <button class="z-nav-add" id="zNavAdd" title="새 대분류(프로젝트)를 Z축 뒤에 추가">＋ 새 대분류</button>
-        <button class="z-nav-btn z-nav-act" id="zNavDel" title="현재 대분류 삭제">🗑</button>
-      </div>
     </main>
+
+    <!-- 시점(회전) — 하단 우측 플로팅 -->
+    <div class="viewpoint" id="viewpoint">
+      <span class="vp-label">시점</span>
+      <div class="vp-rows">
+        <label class="vp-row"><span>X</span><input type="range" id="rotX" min="-60" max="60" step="1" /></label>
+        <label class="vp-row"><span>Y</span><input type="range" id="rotY" min="-60" max="60" step="1" /></label>
+      </div>
+    </div>
 
     <!-- ============ Hint bar ============ -->
     <footer class="hint-bar">
       <div class="hint"><span>카드 <b>드래그</b>로</span><span>이동</span></div>
       <div class="hint"><span><b class="hl">회전</b> 버튼으로</span><span>뒤집기</span></div>
       <div class="hint"><span><b class="hl">휠</b>로 대분류</span><span>전환</span></div>
-      <div class="hint"><span>빈 공간 <b>드래그</b></span><span>시점 회전</span></div>
-      <div class="hint"><span>빈 공간 <b class="hl">더블클릭</b></span><span>시점 복귀</span></div>
+      <div class="hint"><span>빈 공간 <b>드래그</b></span><span>화면 이동</span></div>
+      <div class="hint"><span>빈 공간 <b class="hl">더블클릭</b></span><span>위치·시점 복귀</span></div>
     </footer>
   </div>
 
