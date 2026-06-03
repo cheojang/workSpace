@@ -236,9 +236,6 @@
     el.querySelector(".edit").addEventListener("click", (e) => { e.stopPropagation(); openEditor(card.id); });
     el.querySelector(".del").addEventListener("click", (e) => { e.stopPropagation(); deleteCard(card.id); });
 
-    // hover tilt
-    el.addEventListener("pointermove", (e) => onTilt(e, el));
-    el.addEventListener("pointerleave", () => clearTilt(el));
     // double-click spin
     el.addEventListener("dblclick", () => spin(el));
     // drag
@@ -334,16 +331,6 @@
   // ===================================================================
   //  CARD INTERACTIONS — tilt / spin
   // ===================================================================
-  function onTilt(e, el) {
-    if (state.view.mode === "flat" || el.classList.contains("flipped") || el.classList.contains("dragging") || drag) return;
-    const r = el.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - 0.5;
-    const py = (e.clientY - r.top) / r.height - 0.5;
-    el.style.setProperty("--extra", `rotateY(${px * 10}deg) rotateX(${-py * 10}deg)`);
-  }
-  function clearTilt(el) {
-    if (!el.classList.contains("flipped")) el.style.removeProperty("--extra");
-  }
   function spin(el) {
     if (state.view.mode === "flat") return;
     el.classList.add("spinning");
@@ -512,6 +499,11 @@
   }
   stageEl.addEventListener("pointerup", endBgDrag);
   stageEl.addEventListener("pointercancel", endBgDrag);
+  // 빈 공간 더블클릭 → 기본 시점으로 복귀
+  stageEl.addEventListener("dblclick", (e) => {
+    if (e.target.closest(".card") || e.target.closest(".column")) return;
+    setRotation(-14, 16, true);
+  });
 
   // mode toggle (입체 / 평면)
   function setMode(mode) {

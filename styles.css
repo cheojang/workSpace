@@ -42,6 +42,10 @@
   --floor: rgba(255,255,255,.03);
   --floor-line: rgba(255,255,255,.06);
   --placeholder: rgba(251,113,133,.5);
+  --modal-bg: #1b1f2e;
+  --field-bg: rgba(255,255,255,.07);
+  --field-border: rgba(255,255,255,.2);
+  --label: #c3c8da;
 }
 
 [data-theme="light"] {
@@ -67,6 +71,10 @@
   --floor: rgba(120,130,160,.06);
   --floor-line: rgba(120,130,160,.13);
   --placeholder: rgba(244,63,94,.45);
+  --modal-bg: #ffffff;
+  --field-bg: #f1f4fa;
+  --field-border: rgba(15,23,42,.22);
+  --label: #404a5e;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -460,23 +468,26 @@ input[type=range]::-moz-range-thumb {
 .modal-overlay[hidden] { display: none; }
 .modal {
   width: 100%; max-width: 460px;
-  background: var(--col-bg); backdrop-filter: blur(24px);
+  background: var(--modal-bg);
   border: 1px solid var(--border-strong); border-radius: 20px;
-  box-shadow: var(--shadow); overflow: hidden;
+  box-shadow: 0 30px 70px rgba(0,0,0,.45); overflow: hidden;
   animation: pop .25s var(--ease);
 }
 @keyframes pop { from { transform: scale(.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--border); }
 .modal-head h2 { font-size: 17px; font-weight: 800; }
 .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-.field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-dim); }
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: var(--label); }
 .field small { font-weight: 500; color: var(--text-faint); }
 .field input, .field select, .field textarea {
-  border: 1px solid var(--border); background: var(--input-bg); color: var(--text);
-  padding: 10px 12px; border-radius: 10px; font-size: 14px; font-family: var(--font); outline: none;
-  transition: border-color .2s;
+  border: 1.5px solid var(--field-border); background: var(--field-bg); color: var(--text);
+  padding: 10px 12px; border-radius: 10px; font-size: 14px; font-weight: 500; font-family: var(--font); outline: none;
+  transition: border-color .2s, box-shadow .2s;
 }
-.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+.field input::placeholder, .field textarea::placeholder { color: var(--text-faint); }
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(244,63,94,.18);
+}
 .field textarea { resize: vertical; }
 .field-row { display: flex; gap: 12px; }
 .field-row .field { flex: 1; }
@@ -484,9 +495,9 @@ input[type=range]::-moz-range-thumb {
 .chip-picker .cat-chip { cursor: pointer; border: 1px solid transparent; }
 .chip-picker .cat-chip:hover { border-color: var(--chip-color); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
-.btn { padding: 10px 20px; border-radius: 11px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: var(--font); border: 1px solid var(--border); }
-.btn.ghost { background: transparent; color: var(--text-dim); }
-.btn.ghost:hover { color: var(--text); }
+.btn { padding: 10px 20px; border-radius: 11px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: var(--font); border: 1.5px solid var(--field-border); }
+.btn.ghost { background: var(--field-bg); color: var(--text); }
+.btn.ghost:hover { border-color: var(--border-strong); background: var(--chip-bg); }
 .btn.primary { background: var(--accent-grad); color: #fff; border: 0; box-shadow: 0 6px 16px rgba(244,63,94,.35); }
 
 /* ---------- Share/export menu ---------- */
