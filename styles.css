@@ -125,7 +125,7 @@ body {
 .brand-sub { font-size: 10px; letter-spacing: 2px; color: var(--text-faint); margin-top: 4px; font-weight: 600; }
 
 .search {
-  flex: 1; max-width: 360px;
+  width: 230px; flex: none;
   display: flex; align-items: center; gap: 9px;
   padding: 10px 16px;
   background: var(--input-bg);
@@ -133,6 +133,8 @@ body {
   border-radius: 12px;
   color: var(--text-dim);
 }
+/* 대분류 네비 이후 요소들을 우측 정렬 (검색은 맨 오른쪽) */
+.group-nav { margin-right: auto; }
 .search input { flex: 1; border: 0; background: transparent; color: var(--text); font-size: 14px; outline: none; font-family: var(--font); }
 .search input::placeholder { color: var(--text-faint); }
 
@@ -392,7 +394,17 @@ input[type=range]::-moz-range-thumb {
 .back-title { font-size: 13px; font-weight: 800; color: var(--text); }
 .back-note { font-size: 12.5px; line-height: 1.6; color: var(--text-dim); flex: 1; overflow: auto; white-space: pre-wrap; }
 .back-empty { font-size: 12px; color: var(--text-faint); font-style: italic; }
-.back-hint { font-size: 10.5px; color: var(--text-faint); text-align: right; }
+.back-flip {
+  align-self: flex-end; margin-top: 2px;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 11px; border-radius: 9px;
+  border: 1px solid var(--border-strong); background: var(--chip-bg);
+  color: var(--text); font-size: 12px; font-weight: 700;
+  font-family: var(--font); cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.back-flip:hover { background: var(--input-bg); border-color: var(--accent); color: var(--accent); }
+.back-flip .icon { width: 14px; height: 14px; }
 
 /* drag states */
 .card.dragging {

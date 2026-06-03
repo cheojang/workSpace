@@ -228,11 +228,12 @@
       `<div class="card-face back">` +
         `<div class="back-title">${esc(card.title)}</div>` +
         (card.note ? `<div class="back-note">${esc(card.note)}</div>` : `<div class="back-note back-empty">메모가 없습니다.</div>`) +
-        `<div class="back-hint">버튼으로 다시 뒤집기</div>` +
+        `<button class="back-flip"><svg class="icon"><use href="#i-rotate"/></svg> 다시 뒤집기</button>` +
       `</div>`;
 
     // actions
     el.querySelector(".flip").addEventListener("click", (e) => { e.stopPropagation(); el.classList.toggle("flipped"); });
+    el.querySelector(".back-flip").addEventListener("click", (e) => { e.stopPropagation(); el.classList.remove("flipped"); });
     el.querySelector(".edit").addEventListener("click", (e) => { e.stopPropagation(); openEditor(card.id); });
     el.querySelector(".del").addEventListener("click", (e) => { e.stopPropagation(); deleteCard(card.id); });
 

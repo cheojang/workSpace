@@ -55,11 +55,6 @@
         <button class="gnav-btn gnav-del" id="zNavDel" title="현재 대분류 삭제"><svg class="icon"><use href="#i-trash"/></svg></button>
       </div>
 
-      <div class="search">
-        <svg class="icon"><use href="#i-search"/></svg>
-        <input type="text" id="search" placeholder="카드 검색..." autocomplete="off" />
-      </div>
-
       <div class="mode-toggle" id="modeToggle">
         <button class="mode-btn" data-mode="3d">입체</button>
         <button class="mode-btn" data-mode="flat">평면</button>
@@ -80,6 +75,11 @@
 
       <button class="add-stage-btn alt" id="zNavAdd"><svg class="icon"><use href="#i-plus"/></svg> 분류 추가</button>
       <button class="add-stage-btn" id="addStage"><svg class="icon"><use href="#i-plus"/></svg> 단계 추가</button>
+
+      <div class="search">
+        <svg class="icon"><use href="#i-search"/></svg>
+        <input type="text" id="search" placeholder="카드 검색..." autocomplete="off" />
+      </div>
     </header>
 
     <input type="file" id="csvFile" accept=".csv,text/csv" hidden />
