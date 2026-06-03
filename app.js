@@ -78,7 +78,7 @@
     return {
       version: 2,
       groups: [home, work],
-      view: { rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0, zoom: 1 },
+      view: { rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0, zoom: 1, panX: 0, panY: 0 },
     };
   }
 
@@ -97,7 +97,7 @@
         s.version = 2;
       }
       if (!s || s.version !== 2 || !Array.isArray(s.groups) || !s.groups.length) return seed();
-      s.view = Object.assign({ rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0, zoom: 1 }, s.view);
+      s.view = Object.assign({ rotX: -14, rotY: 16, mode: "3d", theme: "dark", search: "", focus: 0, zoom: 1, panX: 0, panY: 0 }, s.view);
       s.view.focus = clamp(s.view.focus | 0, 0, s.groups.length - 1);
       return s;
     } catch (e) { return seed(); }
@@ -468,11 +468,11 @@
 
   function applyView() {
     if (state.view.mode === "flat") return; // 평면은 CSS가 처리
-    const z = state.view.zoom || 1;
-    scene.style.transform = `scale(${z}) translateZ(-120px) rotateX(${state.view.rotX}deg) rotateY(${state.view.rotY}deg)`;
+    const z = state.view.zoom || 1, px = state.view.panX || 0, py = state.view.panY || 0;
+    scene.style.transform = `translate(${px}px, ${py}px) scale(${z}) translateZ(-120px) rotateX(${state.view.rotX}deg) rotateY(${state.view.rotY}deg)`;
   }
   function resetView() {
-    state.view.zoom = 1;
+    state.view.zoom = 1; state.view.panX = 0; state.view.panY = 0;
     setRotation(-14, 16, true); // applyView + save 포함
   }
   function setRotation(rx, ry, sync) {
@@ -533,35 +533,57 @@
   const zBadge = $("#zNav"), zName = $("#zNavName"), zIdx = $("#zNavIdx");
   // 활성 대분류는 맨 앞 선명, 나머지는 Z축 뒤로 + 위로 빼꼼 + 흐리게
   function applyFocus() {
-    const focus = clamp(state.view.focus | 0, 0, state.groups.length - 1);
+    const n = state.groups.length;
+    const focus = clamp(state.view.focus | 0, 0, n - 1);
     const boards = [...document.querySelectorAll(".group-board")];
     boards.forEach((gb, gi) => {
-      const rel = gi - focus, dist = Math.abs(rel);
+      // 순환 거리: 가장 가까운 방향으로 (무한 루프 느낌)
+      let rel = gi - focus;
+      if (rel > n / 2) rel -= n;
+      if (rel < -n / 2) rel += n;
+      const dist = Math.abs(rel);
       gb.style.setProperty("--gz", (-dist * GROUP_Z_STEP) + "px");
-      gb.style.setProperty("--gy", (-dist * 64) + "px");
+      gb.style.setProperty("--gy", (-dist * 58) + "px");
+      gb.style.setProperty("--gs", rel === 0 ? 1.05 : 0.9); // 활성은 살짝 크게
       gb.classList.toggle("active", rel === 0);
     });
     if (zBadge) {
       const g = state.groups[focus];
       zName.textContent = g ? g.name : "";
-      zIdx.textContent = (focus + 1) + " / " + state.groups.length;
+      zIdx.textContent = (focus + 1) + " / " + n;
     }
   }
+  // 무한 순환 전환 (끝에서 처음으로 wrap)
   function setFocus(next) {
-    const f = clamp(next, 0, state.groups.length - 1);
+    const n = state.groups.length;
+    if (n <= 1) return;
+    const f = ((next % n) + n) % n;
     if (f === (state.view.focus | 0)) return;
     state.view.focus = f;
     applyFocus(); save();
   }
-  // 입체 모드에서 휠 = 줌 인/아웃 (평면 모드에선 일반 스크롤)
-  const ZOOM_MIN = 0.4, ZOOM_MAX = 2.2;
+  // 입체 모드에서 보드 휠 = 마우스 포인터 중심 줌 인/아웃
+  const ZOOM_MIN = 0.45, ZOOM_MAX = 2.4;
   stageEl.addEventListener("wheel", (e) => {
     if (state.view.mode === "flat") return;
     e.preventDefault();
-    const factor = e.deltaY > 0 ? 0.9 : 1.1;
-    state.view.zoom = clamp((state.view.zoom || 1) * factor, ZOOM_MIN, ZOOM_MAX);
+    const rect = stageEl.getBoundingClientRect();
+    const mx = e.clientX - rect.left - rect.width / 2;   // scene 중심(=transform-origin) 기준
+    const my = e.clientY - rect.top - rect.height / 2;
+    const old = state.view.zoom || 1;
+    const nz = clamp(old * (e.deltaY > 0 ? 0.9 : 1.1), ZOOM_MIN, ZOOM_MAX);
+    const r = nz / old;
+    // 커서 아래 지점이 고정되도록 pan 보정 → 줌으로 좌우상하 이동
+    state.view.panX = mx - (mx - (state.view.panX || 0)) * r;
+    state.view.panY = my - (my - (state.view.panY || 0)) * r;
+    state.view.zoom = nz;
     applyView();
     save();
+  }, { passive: false });
+  // 상단 대분류 제목 영역에서 휠 = 대분류 전환 (무한 순환)
+  zBadge.addEventListener("wheel", (e) => {
+    e.preventDefault(); e.stopPropagation();
+    setFocus((state.view.focus | 0) + (e.deltaY > 0 ? 1 : -1));
   }, { passive: false });
   // 상단 네비의 이전/다음 대분류
   $("#zNavPrev").addEventListener("click", () => setFocus((state.view.focus | 0) - 1));
