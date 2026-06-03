@@ -352,10 +352,11 @@
       offX: startX - r.left, offY: startY - r.top,
       startX, startY, rafPending: false, lastEvt: e,
     };
-    el.setPointerCapture(e.pointerId);
-    el.addEventListener("pointermove", onCardPointerMove);
-    el.addEventListener("pointerup", onCardPointerUp, { once: true });
-    el.addEventListener("pointercancel", onCardPointerUp, { once: true });
+    try { el.setPointerCapture(e.pointerId); } catch (_) {}
+    // document 레벨에 등록 → 카드를 body로 옮겨도 끊기지 않음
+    document.addEventListener("pointermove", onCardPointerMove);
+    document.addEventListener("pointerup", onCardPointerUp, { once: true });
+    document.addEventListener("pointercancel", onCardPointerUp, { once: true });
   }
 
   function beginDrag() {
@@ -426,7 +427,7 @@
   function onCardPointerUp() {
     if (!drag) return;
     const el = drag.el;
-    el.removeEventListener("pointermove", onCardPointerMove);
+    document.removeEventListener("pointermove", onCardPointerMove);
 
     if (!drag.started) { drag = null; return; } // was a click, not a drag
 

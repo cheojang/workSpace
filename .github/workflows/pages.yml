@@ -24,6 +24,13 @@ jobs:
         with:
           ref: claude/task-dashboard-drag-drop-XjKwS
 
+      # 배포마다 에셋 URL에 커밋 해시를 붙여 브라우저 캐시를 무효화
+      - name: Cache-bust asset URLs
+        run: |
+          V="${GITHUB_SHA::8}"
+          sed -i "s/href=\"styles.css\"/href=\"styles.css?v=$V\"/" index.html
+          sed -i "s/src=\"app.js\"/src=\"app.js?v=$V\"/" index.html
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
