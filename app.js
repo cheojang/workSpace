@@ -138,6 +138,15 @@
 
       const stages = group.stages;
       const totalW = stages.length * COL_W + (stages.length - 1) * COL_GAP;
+
+      // 대분류 제목 카드 — 보드와 함께 Z축으로 움직임
+      const title = document.createElement("div");
+      title.className = "group-title-card";
+      title.innerHTML = `<span class="gt-dot"></span><span class="gt-name">${esc(group.name)}</span>`;
+      title.title = "더블클릭으로 이름 변경";
+      title.addEventListener("dblclick", () => { if (gi === (state.view.focus | 0)) renameGroup(); });
+      gb.appendChild(title);
+
       stages.forEach((stage, i) => gb.appendChild(buildColumn(group, stage, i, totalW)));
       board.appendChild(gb);
     });
@@ -165,6 +174,7 @@
       `<input class="col-title" value="${esc(stage.name)}" maxlength="24" />` +
       `<span class="col-count">${stage.cardIds.length}</span>` +
       `<button class="col-del" title="단계 삭제"><svg class="icon"><use href="#i-close"/></svg></button>`;
+    inner.appendChild(head);
 
     // card stack
     const stack = document.createElement("div");
@@ -189,7 +199,6 @@
     titleInput.addEventListener("keydown", (e) => { if (e.key === "Enter") titleInput.blur(); });
     head.querySelector(".col-del").addEventListener("click", () => deleteStage(stage.id));
 
-    col.appendChild(head);   // 단계 제목 — 카드처럼 떠 있는 헤더
     col.appendChild(inner);
     return col;
   }
@@ -577,7 +586,7 @@
       if (el.offsetHeight > maxH) maxH = el.offsetHeight;
     });
     floor.style.width = (boardW + 280) + "px";
-    floor.style.top = (40 + maxH + 28) + "px"; // 컬럼 아래로 (board top 40 + 최대 컬럼 높이)
+    floor.style.top = (70 + maxH + 28) + "px"; // 컬럼 아래로 (board top 70 + 최대 컬럼 높이)
   }
   // 무한 순환 전환 (끝에서 처음으로 wrap)
   function setFocus(next) {

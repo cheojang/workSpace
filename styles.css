@@ -292,31 +292,27 @@ input[type=range]::-moz-range-thumb {
 .ax-y { transform: rotateZ(90deg); }   /* +Y 아래 = 리스트 */
 .ax-z { transform: rotateY(90deg); }   /* +Z 깊이 = 분류 */
 
-/* 작업영역 플로팅 대분류 제목 */
-.group-float {
-  position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
-  z-index: 24; display: flex; align-items: center; gap: 10px;
-  padding: 7px 10px;
-  background: var(--header-bg); border: 1px solid var(--border-strong);
-  border-radius: 999px; box-shadow: var(--shadow);
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  cursor: ns-resize; user-select: none;
+/* 대분류 제목 카드 — 보드와 함께 Z축으로 움직임 */
+.group-title-card {
+  position: absolute; left: 0; top: -54px;
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 9px;
+  padding: 10px 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  white-space: nowrap; cursor: text;
 }
-.app.flat .group-float { display: none; }
-.gf-arrow {
-  width: 24px; height: 24px; display: grid; place-items: center;
-  border: 0; background: var(--chip-bg); color: var(--text-dim);
-  border-radius: 50%; cursor: pointer; font-size: 9px;
-}
-.gf-arrow:hover { color: var(--text); }
-.gf-body { display: flex; flex-direction: column; align-items: center; line-height: 1.15; min-width: 76px; }
-.gf-name { font-size: 15px; font-weight: 800; color: var(--text); }
-.gf-hint { font-size: 10px; color: var(--text-faint); }
+.gt-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+.gt-name { font-size: 16px; font-weight: 800; color: var(--text); }
+.app.flat .group-title-card { position: static; transform: none; margin-bottom: 14px; }
 
 /* Board holds group-boards, centered */
 .board {
   position: absolute;
-  top: 40px; left: 50%;
+  top: 70px; left: 50%;
   transform-style: preserve-3d;
 }
 
@@ -348,20 +344,16 @@ input[type=range]::-moz-range-thumb {
   transition: transform .45s var(--ease);
 }
 .column-inner {
-  background: transparent;
-  border: 0;
-  padding: 0;
-  box-shadow: none;
+  background: var(--col-bg);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
 }
-/* 단계 제목 — 카드처럼 떠 있는 헤더 */
 .column-head {
   display: flex; align-items: center; gap: 9px;
-  padding: 11px 13px; margin-bottom: 12px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
-  border-radius: 14px;
-  box-shadow: var(--shadow);
+  padding: 4px 4px 14px;
 }
 .col-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; box-shadow: 0 0 10px var(--accent); }
 .col-title {
