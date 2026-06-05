@@ -555,16 +555,21 @@
     if (rel < -n / 2) rel += n;
     return rel;
   }
-  // 활성 대분류는 맨 앞 선명, 나머지는 Z축 뒤로 + 위로 빼꼼 + 흐리게
+  // 대분류 보드 전체가 대관람차처럼 원을 그리며 회전·교체
+  const WHEEL_R = 620, WHEEL_STEP = 30; // 반경(px), 보드 간 각도(deg)
   function applyFocus() {
     const n = state.groups.length;
     const focus = clamp(state.view.focus | 0, 0, n - 1);
     const boards = [...document.querySelectorAll(".group-board")];
     boards.forEach((gb, gi) => {
-      const rel = relIndex(gi, focus, n), dist = Math.abs(rel);
-      gb.style.setProperty("--gz", (-dist * GROUP_Z_STEP) + "px");
-      gb.style.setProperty("--gy", (-dist * 58) + "px");
-      gb.style.setProperty("--gs", rel === 0 ? 1.05 : 0.9); // 활성은 살짝 크게
+      const rel = relIndex(gi, focus, n);
+      const angle = rel * WHEEL_STEP;
+      const rad = angle * Math.PI / 180;
+      // 원 둘레 위치: 활성은 정면(앞·중앙), 다음은 위에서, 이전은 아래에서 호를 그림
+      gb.style.setProperty("--gz", (WHEEL_R * Math.cos(rad) - WHEEL_R).toFixed(1) + "px");
+      gb.style.setProperty("--gy", (-WHEEL_R * Math.sin(rad)).toFixed(1) + "px");
+      gb.style.setProperty("--ga", angle.toFixed(1) + "deg"); // 바퀴 접선 방향 기울기
+      gb.style.setProperty("--gs", rel === 0 ? 1 : 0.88);
       gb.classList.toggle("active", rel === 0);
     });
     const g = state.groups[focus];
@@ -573,23 +578,19 @@
     renderReel(focus, n);
     requestAnimationFrame(layoutFloor);
   }
-  // 왼쪽 대관람차 목차 — 활성은 오른쪽 정점(보드 쪽), 나머지는 원호를 따라 위/아래로 순환
-  const REEL_R = 240, REEL_STEP = 28; // 반경(px), 항목 간 각도(deg)
+  // 왼쪽 세로 목차 — 현재 분류 표시(활성 중앙 강조). 회전 연출은 보드가 담당
   function renderReel(focus, n) {
     if (!reelEl) return;
     reelEl.innerHTML = "";
-    const maxVisible = Math.min(3, Math.floor(n / 2)); // 위/아래로 몇 개까지 노출
+    const maxVisible = Math.min(3, Math.floor(n / 2));
     state.groups.forEach((g, gi) => {
       const rel = relIndex(gi, focus, n), dist = Math.abs(rel);
       if (dist > maxVisible) return;
-      const a = (rel * REEL_STEP) * Math.PI / 180;
-      const x = REEL_R * Math.cos(a) - REEL_R; // 활성 0(오른쪽 정점), 나머지 왼쪽으로 후퇴
-      const y = REEL_R * Math.sin(a);          // 위/아래로 분산 (관람차 곤돌라)
       const it = document.createElement("div");
       it.className = "reel-item" + (rel === 0 ? " active" : "");
       it.style.setProperty("--gc", groupColor(gi));
-      it.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${rel === 0 ? 1 : 0.82})`;
-      it.style.opacity = dist === 0 ? 1 : dist === 1 ? 0.5 : 0.22;
+      it.style.transform = `translateY(${(rel * 52).toFixed(0)}px) scale(${rel === 0 ? 1 : 0.9})`;
+      it.style.opacity = dist === 0 ? 1 : dist === 1 ? 0.55 : 0.25;
       it.style.zIndex = String(10 - dist);
       it.innerHTML = `<span class="reel-bar"></span><span class="reel-name">${esc(g.name)}</span>`;
       it.addEventListener("click", () => (rel === 0 ? renameGroup() : setFocus(gi)));

@@ -300,13 +300,13 @@ input[type=range]::-moz-range-thumb {
 }
 .group-reel .reel-item { pointer-events: auto; }
 .reel-item {
-  position: absolute; right: 0; top: 50%;
-  width: 176px; height: 46px; margin-top: -23px;
+  position: absolute; left: 0; top: 50%;
+  width: 180px; height: 46px; margin-top: -23px;
   display: flex; align-items: center; gap: 10px;
   padding: 0 14px;
   background: var(--card-bg); border: 1px solid var(--border);
   border-radius: 13px;
-  transition: transform .5s var(--ease), opacity .45s var(--ease);
+  transition: transform .6s cubic-bezier(.32,.06,.18,1), opacity .5s ease;
   cursor: ns-resize; user-select: none;
 }
 .reel-bar { width: 5px; height: 22px; border-radius: 3px; background: var(--gc, var(--accent)); flex: none; }
@@ -326,13 +326,14 @@ input[type=range]::-moz-range-thumb {
   transform-style: preserve-3d;
 }
 
-/* ---------- Group board (대분류 = Z축 깊이 평면) ---------- */
+/* ---------- Group board (대분류 = 대관람차 곤돌라) ---------- */
 .group-board {
   position: absolute;
   top: 0; left: 0;
   transform-style: preserve-3d;
-  transform: translate3d(0, var(--gy, 0), var(--gz, 0)) scale(var(--gs, 1));
-  transition: transform .55s var(--ease), opacity .45s var(--ease), filter .45s var(--ease);
+  transform: translate3d(0, var(--gy, 0), var(--gz, 0)) rotateX(var(--ga, 0deg)) scale(var(--gs, 1));
+  transition: transform .85s cubic-bezier(.32,.06,.18,1),
+              opacity .7s ease, filter .7s ease;
 }
 .group-board:not(.active) {
   opacity: .18;
