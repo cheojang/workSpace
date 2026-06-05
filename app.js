@@ -606,7 +606,8 @@
       it.style.opacity = !shown ? "0" : dist === 0 ? "1" : dist === 1 ? "0.5" : "0.22";
       it.style.pointerEvents = shown ? "auto" : "none";
       it.style.zIndex = String(10 - dist);
-      it.style.transform = `translateY(${(rel * REEL_GAP).toFixed(0)}px) scale(${rel === 0 ? 1 : 0.9})`;
+      // 보드(다음 분류가 위에서 내려옴)와 같은 방향으로: rel↑ = 위쪽
+      it.style.transform = `translateY(${(-rel * REEL_GAP).toFixed(0)}px) scale(${rel === 0 ? 1 : 0.9})`;
     });
   }
   // 바닥 판을 활성 보드 크기(단계 수·컬럼 높이)에 맞춰 배치
