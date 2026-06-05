@@ -513,10 +513,10 @@ input[type=range]::-moz-range-thumb {
 .app.flat .group-board.active {
   position: static; transform: none !important; opacity: 1; filter: none;
   display: flex; gap: 22px; padding: 28px 32px 28px 196px; /* 좌측에 목차 공간 */
-  height: 100%; overflow-x: auto; overflow-y: hidden; align-items: flex-start;
+  height: 100%; overflow-x: auto; overflow-y: hidden; align-items: stretch;
 }
-.app.flat .column { position: static; transform: none !important; flex: 0 0 var(--col-w); }
-.app.flat .column-inner { height: calc(100vh - 230px); }
+.app.flat .column { position: static; transform: none !important; flex: 0 0 var(--col-w); height: 100%; }
+.app.flat .column-inner { height: 100%; }
 .app.flat .card-stack { min-height: 0; }
 .app.flat .card { position: relative !important; transform: var(--extra, none) !important; }
 .app.flat .card-face { border-left-color: var(--cat-color, var(--accent)); }
