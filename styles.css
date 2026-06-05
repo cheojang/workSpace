@@ -292,27 +292,36 @@ input[type=range]::-moz-range-thumb {
 .ax-y { transform: rotateZ(90deg); }   /* +Y 아래 = 리스트 */
 .ax-z { transform: rotateY(90deg); }   /* +Z 깊이 = 분류 */
 
-/* 대분류 제목 카드 — 보드와 함께 Z축으로 움직임 */
-.group-title-card {
-  position: absolute; left: 0; top: -54px;
-  transform: translateX(-50%);
-  display: flex; align-items: center; gap: 9px;
-  padding: 10px 20px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
-  border-radius: 14px;
-  box-shadow: var(--shadow);
-  white-space: nowrap; cursor: text;
+/* 대분류 목차 — 왼쪽 세로 관람차 */
+.group-reel {
+  position: fixed; left: 22px; top: 50%; transform: translateY(-50%);
+  z-index: 30; width: 196px; height: 320px;
+  pointer-events: auto; cursor: ns-resize;
 }
-.gt-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-.gt-name { font-size: 16px; font-weight: 800; color: var(--text); }
-.app.flat .group-title-card { position: static; transform: none; margin-bottom: 14px; }
+.reel-item {
+  position: absolute; left: 0; right: 0; top: 50%;
+  height: 46px; margin-top: -23px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 14px;
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 13px;
+  transition: transform .42s var(--ease), opacity .42s var(--ease);
+  cursor: pointer; user-select: none;
+}
+.reel-bar { width: 5px; height: 22px; border-radius: 3px; background: var(--gc, var(--accent)); flex: none; }
+.reel-name { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.reel-item.active {
+  border-color: var(--gc, var(--accent));
+  border-left: 3px solid var(--gc, var(--accent));
+  background: var(--card-bg);
+}
+.reel-item.active .reel-bar { height: 28px; }
+.reel-item.active .reel-name { font-size: 15.5px; font-weight: 800; }
 
 /* Board holds group-boards, centered */
 .board {
   position: absolute;
-  top: 70px; left: 50%;
+  top: 44px; left: 50%;
   transform-style: preserve-3d;
 }
 
@@ -331,8 +340,6 @@ input[type=range]::-moz-range-thumb {
 }
 [data-theme="light"] .group-board:not(.active) { opacity: .32; }
 .group-board.active { opacity: 1; filter: none; }
-/* 활성(맨 앞) 보드 카드는 더 또렷하게 */
-.group-board.active .card-face { box-shadow: 0 22px 48px rgba(0,0,0,.5); }
 
 /* ---------- Column ---------- */
 .column {
@@ -399,7 +406,6 @@ input[type=range]::-moz-range-thumb {
   padding: 14px;
   background: var(--card-bg);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   border-left: 3px solid var(--cat-color, var(--accent));

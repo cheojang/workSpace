@@ -138,15 +138,6 @@
 
       const stages = group.stages;
       const totalW = stages.length * COL_W + (stages.length - 1) * COL_GAP;
-
-      // 대분류 제목 카드 — 보드와 함께 Z축으로 움직임
-      const title = document.createElement("div");
-      title.className = "group-title-card";
-      title.innerHTML = `<span class="gt-dot"></span><span class="gt-name">${esc(group.name)}</span>`;
-      title.title = "더블클릭으로 이름 변경";
-      title.addEventListener("dblclick", () => { if (gi === (state.view.focus | 0)) renameGroup(); });
-      gb.appendChild(title);
-
       stages.forEach((stage, i) => gb.appendChild(buildColumn(group, stage, i, totalW)));
       board.appendChild(gb);
     });
@@ -553,18 +544,24 @@
   // ===================================================================
   //  Z축 — 대분류(프로젝트) 깊이 전환
   // ===================================================================
-  const zBadge = $("#zNav"), zName = $("#zNavName"), zIdx = $("#zNavIdx");
+  const zBadge = $("#zNav"), zName = $("#zNavName"), zIdx = $("#zNavIdx"), reelEl = $("#groupReel");
+  // 대분류별 색 (목차 구분용)
+  const GROUP_COLORS = ["#f43f5e", "#6366f1", "#10b981", "#f59e0b", "#14b8a6", "#8b5cf6", "#ef4444", "#0ea5e9"];
+  const groupColor = (i) => GROUP_COLORS[((i % GROUP_COLORS.length) + GROUP_COLORS.length) % GROUP_COLORS.length];
+  // 순환 최단 거리
+  function relIndex(gi, focus, n) {
+    let rel = gi - focus;
+    if (rel > n / 2) rel -= n;
+    if (rel < -n / 2) rel += n;
+    return rel;
+  }
   // 활성 대분류는 맨 앞 선명, 나머지는 Z축 뒤로 + 위로 빼꼼 + 흐리게
   function applyFocus() {
     const n = state.groups.length;
     const focus = clamp(state.view.focus | 0, 0, n - 1);
     const boards = [...document.querySelectorAll(".group-board")];
     boards.forEach((gb, gi) => {
-      // 순환 거리: 가장 가까운 방향으로 (무한 루프 느낌)
-      let rel = gi - focus;
-      if (rel > n / 2) rel -= n;
-      if (rel < -n / 2) rel += n;
-      const dist = Math.abs(rel);
+      const rel = relIndex(gi, focus, n), dist = Math.abs(rel);
       gb.style.setProperty("--gz", (-dist * GROUP_Z_STEP) + "px");
       gb.style.setProperty("--gy", (-dist * 58) + "px");
       gb.style.setProperty("--gs", rel === 0 ? 1.05 : 0.9); // 활성은 살짝 크게
@@ -573,7 +570,26 @@
     const g = state.groups[focus];
     if (zName) zName.textContent = g ? g.name : "";
     if (zIdx) zIdx.textContent = (focus + 1) + " / " + n;
+    renderReel(focus, n);
     requestAnimationFrame(layoutFloor);
+  }
+  // 왼쪽 세로 목차(관람차) — 활성 중앙, 위아래 인접, 순환
+  function renderReel(focus, n) {
+    if (!reelEl) return;
+    reelEl.innerHTML = "";
+    state.groups.forEach((g, gi) => {
+      const rel = relIndex(gi, focus, n), dist = Math.abs(rel);
+      if (dist > 2) return; // 가까운 항목만 노출
+      const it = document.createElement("div");
+      it.className = "reel-item" + (rel === 0 ? " active" : "");
+      it.style.setProperty("--gc", groupColor(gi));
+      it.style.transform = `translateY(${rel * 54}px) scale(${rel === 0 ? 1 : 0.86})`;
+      it.style.opacity = dist === 0 ? 1 : dist === 1 ? 0.5 : 0.2;
+      it.style.zIndex = String(10 - dist);
+      it.innerHTML = `<span class="reel-bar"></span><span class="reel-name">${esc(g.name)}</span>`;
+      it.addEventListener("click", () => (rel === 0 ? renameGroup() : setFocus(gi)));
+      reelEl.appendChild(it);
+    });
   }
   // 바닥 판을 활성 보드 크기(단계 수·컬럼 높이)에 맞춰 배치
   function layoutFloor() {
@@ -586,7 +602,7 @@
       if (el.offsetHeight > maxH) maxH = el.offsetHeight;
     });
     floor.style.width = (boardW + 280) + "px";
-    floor.style.top = (70 + maxH + 28) + "px"; // 컬럼 아래로 (board top 70 + 최대 컬럼 높이)
+    floor.style.top = (44 + maxH + 28) + "px"; // 컬럼 아래로 (board top + 최대 컬럼 높이)
   }
   // 무한 순환 전환 (끝에서 처음으로 wrap)
   function setFocus(next) {
@@ -621,6 +637,7 @@
     setFocus((state.view.focus | 0) + (e.deltaY > 0 ? 1 : -1));
   }
   zBadge.addEventListener("wheel", groupWheel, { passive: false });
+  if (reelEl) reelEl.addEventListener("wheel", groupWheel, { passive: false });
   $("#zNavPrev").addEventListener("click", () => setFocus((state.view.focus | 0) - 1));
   $("#zNavNext").addEventListener("click", () => setFocus((state.view.focus | 0) + 1));
   // 화살표 키로도 대분류 전환
