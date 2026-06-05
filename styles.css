@@ -292,10 +292,28 @@ input[type=range]::-moz-range-thumb {
 .ax-y { transform: rotateZ(90deg); }   /* +Y 아래 = 리스트 */
 .ax-z { transform: rotateY(90deg); }   /* +Z 깊이 = 분류 */
 
-/* 대분류 목차 — 왼쪽 대관람차 */
+/* 입체 모드 좌우·상하 스크롤(패닝) 바 */
+.pan-bar {
+  position: fixed; z-index: 35;
+  background: var(--chip-bg); border: 1px solid var(--border);
+  border-radius: 9px; opacity: .55; transition: opacity .15s;
+}
+.pan-bar:hover { opacity: 1; }
+.pan-bar-v { right: 8px; top: 96px; bottom: 104px; width: 11px; }
+.pan-bar-h { left: 200px; right: 48px; bottom: 54px; height: 11px; }
+.pan-grip {
+  position: absolute; background: var(--text-dim); border-radius: 8px;
+  cursor: grab; transition: background .15s;
+}
+.pan-grip:hover { background: var(--text); }
+.pan-bar-v .pan-grip { left: 1px; right: 1px; height: 90px; top: 0; }
+.pan-bar-h .pan-grip { top: 1px; bottom: 1px; width: 140px; left: 0; }
+.app.flat .pan-bar { display: none; }
+
+/* 대분류 목차 — 왼쪽(활성이 보드 상단 높이에 오도록 위로) */
 .group-reel {
-  position: fixed; left: 12px; top: 50%; transform: translateY(-50%);
-  z-index: 30; width: 168px; height: 340px;
+  position: fixed; left: 12px; top: 158px; transform: translateY(-50%);
+  z-index: 30; width: 168px; height: 280px;
   pointer-events: none; /* 컨테이너는 통과, 항목만 클릭 */
 }
 .group-reel .reel-item { pointer-events: auto; }

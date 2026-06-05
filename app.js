@@ -465,11 +465,50 @@
   // ===================================================================
   const rotXEl = $("#rotX"), rotYEl = $("#rotY");
 
+  const PAN_RANGE = 1000; // 패닝(스크롤) 한계(px)
+  const panBarV = $("#panBarV"), panGripV = $("#panGripV"), panBarH = $("#panBarH"), panGripH = $("#panGripH");
   function applyView() {
     if (state.view.mode === "flat") return; // 평면은 CSS가 처리
-    const z = state.view.zoom || 1, px = state.view.panX || 0, py = state.view.panY || 0;
+    state.view.panX = clamp(state.view.panX || 0, -PAN_RANGE, PAN_RANGE);
+    state.view.panY = clamp(state.view.panY || 0, -PAN_RANGE, PAN_RANGE);
+    const z = state.view.zoom || 1, px = state.view.panX, py = state.view.panY;
     scene.style.transform = `translate(${px}px, ${py}px) scale(${z}) translateZ(-120px) rotateX(${state.view.rotX}deg) rotateY(${state.view.rotY}deg)`;
+    updateScrollbars();
   }
+  function updateScrollbars() {
+    const set = (bar, grip, pan, v) => {
+      if (!bar || !grip) return;
+      const gl = v ? grip.offsetHeight : grip.offsetWidth;
+      const track = (v ? bar.clientHeight : bar.clientWidth) - gl;
+      const pos = Math.max(0, Math.min(track, ((PAN_RANGE - pan) / (2 * PAN_RANGE)) * track));
+      grip.style[v ? "top" : "left"] = pos + "px";
+    };
+    set(panBarV, panGripV, state.view.panY || 0, true);
+    set(panBarH, panGripH, state.view.panX || 0, false);
+  }
+  // 스크롤바 그립 드래그 → 패닝
+  function bindPan(grip, v) {
+    if (!grip) return;
+    grip.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      const bar = grip.parentNode;
+      const gl = v ? grip.offsetHeight : grip.offsetWidth;
+      const track = (v ? bar.clientHeight : bar.clientWidth) - gl;
+      const start = v ? e.clientY : e.clientX;
+      const startPan = v ? (state.view.panY || 0) : (state.view.panX || 0);
+      const mv = (ev) => {
+        const d = (v ? ev.clientY : ev.clientX) - start;
+        const np = clamp(startPan - (d / track) * (2 * PAN_RANGE), -PAN_RANGE, PAN_RANGE);
+        if (v) state.view.panY = np; else state.view.panX = np;
+        applyView();
+      };
+      const up = () => { document.removeEventListener("pointermove", mv); document.removeEventListener("pointerup", up); save(); };
+      document.addEventListener("pointermove", mv);
+      document.addEventListener("pointerup", up);
+    });
+  }
+  bindPan(panGripV, true);
+  bindPan(panGripH, false);
   function resetView() {
     state.view.zoom = 1; state.view.panX = 0; state.view.panY = 0;
     setRotation(-14, 16, true); // applyView + save 포함
