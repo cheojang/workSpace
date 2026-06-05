@@ -152,7 +152,7 @@
     const col = document.createElement("div");
     col.className = "column";
     col.dataset.stageId = stage.id;
-    col.style.setProperty("--cx", (i * (COL_W + COL_GAP) - totalW / 2) + "px");
+    col.style.setProperty("--cx", (i * (COL_W + COL_GAP)) + "px"); // 좌측 정렬 — 첫 단계 위치 고정, 늘면 우측으로
 
     const inner = document.createElement("div");
     inner.className = "column-inner";
@@ -565,11 +565,10 @@
       const rel = relIndex(gi, focus, n);
       const angle = rel * WHEEL_STEP;
       const rad = angle * Math.PI / 180;
-      // 원 둘레 위치: 활성은 정면(앞·중앙), 다음은 위에서, 이전은 아래에서 호를 그림
+      // 원 둘레 위치: 활성은 정면(앞·중앙), 다음은 위에서, 이전은 아래에서 호를 그림 (곤돌라는 수평 유지)
       gb.style.setProperty("--gz", (WHEEL_R * Math.cos(rad) - WHEEL_R).toFixed(1) + "px");
       gb.style.setProperty("--gy", (-WHEEL_R * Math.sin(rad)).toFixed(1) + "px");
-      gb.style.setProperty("--ga", angle.toFixed(1) + "deg"); // 바퀴 접선 방향 기울기
-      gb.style.setProperty("--gs", rel === 0 ? 1 : 0.88);
+      gb.style.setProperty("--gs", rel === 0 ? 1 : 0.9);
       gb.classList.toggle("active", rel === 0);
     });
     const g = state.groups[focus];
@@ -608,8 +607,9 @@
     document.querySelectorAll(".group-board.active .column-inner").forEach((el) => {
       if (el.offsetHeight > maxH) maxH = el.offsetHeight;
     });
-    floor.style.width = (boardW + 280) + "px";
-    floor.style.top = (44 + maxH + 28) + "px"; // 컬럼 아래로 (board top + 최대 컬럼 높이)
+    floor.style.width = (boardW + 240) + "px";
+    floor.style.left = (296 + boardW / 2) + "px"; // 좌측정렬 보드의 컬럼 중앙
+    floor.style.top = (44 + maxH + 28) + "px";    // 컬럼 아래로 (board top + 최대 컬럼 높이)
   }
   // 무한 순환 전환 (끝에서 처음으로 wrap)
   function setFocus(next) {
