@@ -294,14 +294,14 @@ input[type=range]::-moz-range-thumb {
 
 /* 대분류 목차 — 왼쪽 대관람차 */
 .group-reel {
-  position: fixed; left: 14px; top: 50%; transform: translateY(-50%);
-  z-index: 30; width: 250px; height: 360px;
+  position: fixed; left: 12px; top: 50%; transform: translateY(-50%);
+  z-index: 30; width: 168px; height: 340px;
   pointer-events: none; /* 컨테이너는 통과, 항목만 클릭 */
 }
 .group-reel .reel-item { pointer-events: auto; }
 .reel-item {
   position: absolute; left: 0; top: 50%;
-  width: 180px; height: 46px; margin-top: -23px;
+  width: 150px; height: 44px; margin-top: -22px;
   display: flex; align-items: center; gap: 10px;
   padding: 0 14px;
   background: var(--card-bg); border: 1px solid var(--border);
@@ -322,7 +322,7 @@ input[type=range]::-moz-range-thumb {
 /* Board — 첫 단계를 좌측 정렬(목차 구역 오른쪽). 단계가 늘면 우측으로 */
 .board {
   position: absolute;
-  top: 44px; left: 296px;
+  top: 44px; left: 210px;
   transform-style: preserve-3d;
 }
 

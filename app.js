@@ -142,6 +142,7 @@
       board.appendChild(gb);
     });
 
+    buildReel();
     applyView();
     applySearch();
     applyFocus();
@@ -574,27 +575,38 @@
     const g = state.groups[focus];
     if (zName) zName.textContent = g ? g.name : "";
     if (zIdx) zIdx.textContent = (focus + 1) + " / " + n;
-    renderReel(focus, n);
+    updateReel(focus, n);
     requestAnimationFrame(layoutFloor);
   }
-  // 왼쪽 세로 목차 — 현재 분류 표시(활성 중앙 강조). 회전 연출은 보드가 담당
-  function renderReel(focus, n) {
+  // 목차 항목을 한 번만 생성(대분류 추가/삭제 시) — 이후엔 위치만 갱신해 부드럽게 이동
+  function buildReel() {
     if (!reelEl) return;
     reelEl.innerHTML = "";
-    const maxVisible = Math.min(3, Math.floor(n / 2));
     state.groups.forEach((g, gi) => {
-      const rel = relIndex(gi, focus, n), dist = Math.abs(rel);
-      if (dist > maxVisible) return;
       const it = document.createElement("div");
-      it.className = "reel-item" + (rel === 0 ? " active" : "");
+      it.className = "reel-item";
+      it.dataset.gi = String(gi);
       it.style.setProperty("--gc", groupColor(gi));
-      it.style.transform = `translateY(${(rel * 52).toFixed(0)}px) scale(${rel === 0 ? 1 : 0.9})`;
-      it.style.opacity = dist === 0 ? 1 : dist === 1 ? 0.55 : 0.25;
-      it.style.zIndex = String(10 - dist);
       it.innerHTML = `<span class="reel-bar"></span><span class="reel-name">${esc(g.name)}</span>`;
-      it.addEventListener("click", () => (rel === 0 ? renameGroup() : setFocus(gi)));
+      it.addEventListener("click", () => ((+it.dataset.gi === (state.view.focus | 0)) ? renameGroup() : setFocus(+it.dataset.gi)));
       it.addEventListener("wheel", groupWheel, { passive: false });
       reelEl.appendChild(it);
+    });
+  }
+  // 활성 중앙 고정 + 위아래 정렬. 항목 DOM은 유지하고 transform만 바꿔 부드럽게
+  const REEL_GAP = 50; // 항목 세로 간격(px)
+  function updateReel(focus, n) {
+    if (!reelEl) return;
+    const maxVisible = Math.min(3, Math.max(1, Math.floor(n / 2)));
+    [...reelEl.children].forEach((it) => {
+      const gi = +it.dataset.gi;
+      const rel = relIndex(gi, focus, n), dist = Math.abs(rel);
+      const shown = dist <= maxVisible;
+      it.classList.toggle("active", rel === 0);
+      it.style.opacity = !shown ? "0" : dist === 0 ? "1" : dist === 1 ? "0.5" : "0.22";
+      it.style.pointerEvents = shown ? "auto" : "none";
+      it.style.zIndex = String(10 - dist);
+      it.style.transform = `translateY(${(rel * REEL_GAP).toFixed(0)}px) scale(${rel === 0 ? 1 : 0.9})`;
     });
   }
   // 바닥 판을 활성 보드 크기(단계 수·컬럼 높이)에 맞춰 배치
@@ -608,7 +620,7 @@
       if (el.offsetHeight > maxH) maxH = el.offsetHeight;
     });
     floor.style.width = (boardW + 240) + "px";
-    floor.style.left = (296 + boardW / 2) + "px"; // 좌측정렬 보드의 컬럼 중앙
+    floor.style.left = (210 + boardW / 2) + "px"; // 좌측정렬 보드의 컬럼 중앙
     floor.style.top = (44 + maxH + 28) + "px";    // 컬럼 아래로 (board top + 최대 컬럼 높이)
   }
   // 무한 순환 전환 (끝에서 처음으로 wrap)
