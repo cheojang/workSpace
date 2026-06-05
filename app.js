@@ -172,10 +172,6 @@
     const stack = document.createElement("div");
     stack.className = "card-stack";
     stack.dataset.stageId = stage.id;
-    // 카드가 많아 넘칠 때만 내부 스크롤(줌 대신)
-    stack.addEventListener("wheel", (e) => {
-      if (stack.scrollHeight > stack.clientHeight + 1) e.stopPropagation();
-    }, { passive: true });
     stage.cardIds.forEach((cid) => {
       const card = cards[cid];
       if (card) stack.appendChild(buildCard(card));
