@@ -573,21 +573,27 @@
     renderReel(focus, n);
     requestAnimationFrame(layoutFloor);
   }
-  // 왼쪽 세로 목차(관람차) — 활성 중앙, 위아래 인접, 순환
+  // 왼쪽 대관람차 목차 — 활성은 오른쪽 정점(보드 쪽), 나머지는 원호를 따라 위/아래로 순환
+  const REEL_R = 240, REEL_STEP = 28; // 반경(px), 항목 간 각도(deg)
   function renderReel(focus, n) {
     if (!reelEl) return;
     reelEl.innerHTML = "";
+    const maxVisible = Math.min(3, Math.floor(n / 2)); // 위/아래로 몇 개까지 노출
     state.groups.forEach((g, gi) => {
       const rel = relIndex(gi, focus, n), dist = Math.abs(rel);
-      if (dist > 2) return; // 가까운 항목만 노출
+      if (dist > maxVisible) return;
+      const a = (rel * REEL_STEP) * Math.PI / 180;
+      const x = REEL_R * Math.cos(a) - REEL_R; // 활성 0(오른쪽 정점), 나머지 왼쪽으로 후퇴
+      const y = REEL_R * Math.sin(a);          // 위/아래로 분산 (관람차 곤돌라)
       const it = document.createElement("div");
       it.className = "reel-item" + (rel === 0 ? " active" : "");
       it.style.setProperty("--gc", groupColor(gi));
-      it.style.transform = `translateY(${rel * 54}px) scale(${rel === 0 ? 1 : 0.86})`;
-      it.style.opacity = dist === 0 ? 1 : dist === 1 ? 0.5 : 0.2;
+      it.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${rel === 0 ? 1 : 0.82})`;
+      it.style.opacity = dist === 0 ? 1 : dist === 1 ? 0.5 : 0.22;
       it.style.zIndex = String(10 - dist);
       it.innerHTML = `<span class="reel-bar"></span><span class="reel-name">${esc(g.name)}</span>`;
       it.addEventListener("click", () => (rel === 0 ? renameGroup() : setFocus(gi)));
+      it.addEventListener("wheel", groupWheel, { passive: false });
       reelEl.appendChild(it);
     });
   }
@@ -637,7 +643,6 @@
     setFocus((state.view.focus | 0) + (e.deltaY > 0 ? 1 : -1));
   }
   zBadge.addEventListener("wheel", groupWheel, { passive: false });
-  if (reelEl) reelEl.addEventListener("wheel", groupWheel, { passive: false });
   $("#zNavPrev").addEventListener("click", () => setFocus((state.view.focus | 0) - 1));
   $("#zNavNext").addEventListener("click", () => setFocus((state.view.focus | 0) + 1));
   // 화살표 키로도 대분류 전환

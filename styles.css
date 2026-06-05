@@ -292,21 +292,22 @@ input[type=range]::-moz-range-thumb {
 .ax-y { transform: rotateZ(90deg); }   /* +Y 아래 = 리스트 */
 .ax-z { transform: rotateY(90deg); }   /* +Z 깊이 = 분류 */
 
-/* 대분류 목차 — 왼쪽 세로 관람차 */
+/* 대분류 목차 — 왼쪽 대관람차 */
 .group-reel {
-  position: fixed; left: 22px; top: 50%; transform: translateY(-50%);
-  z-index: 30; width: 196px; height: 320px;
-  pointer-events: auto; cursor: ns-resize;
+  position: fixed; left: 14px; top: 50%; transform: translateY(-50%);
+  z-index: 30; width: 250px; height: 360px;
+  pointer-events: none; /* 컨테이너는 통과, 항목만 클릭 */
 }
+.group-reel .reel-item { pointer-events: auto; }
 .reel-item {
-  position: absolute; left: 0; right: 0; top: 50%;
-  height: 46px; margin-top: -23px;
+  position: absolute; right: 0; top: 50%;
+  width: 176px; height: 46px; margin-top: -23px;
   display: flex; align-items: center; gap: 10px;
   padding: 0 14px;
   background: var(--card-bg); border: 1px solid var(--border);
   border-radius: 13px;
-  transition: transform .42s var(--ease), opacity .42s var(--ease);
-  cursor: pointer; user-select: none;
+  transition: transform .5s var(--ease), opacity .45s var(--ease);
+  cursor: ns-resize; user-select: none;
 }
 .reel-bar { width: 5px; height: 22px; border-radius: 3px; background: var(--gc, var(--accent)); flex: none; }
 .reel-name { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -318,10 +319,10 @@ input[type=range]::-moz-range-thumb {
 .reel-item.active .reel-bar { height: 28px; }
 .reel-item.active .reel-name { font-size: 15.5px; font-weight: 800; }
 
-/* Board holds group-boards, centered */
+/* Board holds group-boards, centered (목차 공간 위해 오른쪽으로 시프트) */
 .board {
   position: absolute;
-  top: 44px; left: 50%;
+  top: 44px; left: calc(50% + 120px);
   transform-style: preserve-3d;
 }
 
@@ -515,7 +516,7 @@ input[type=range]::-moz-range-thumb {
 /* ---------- Ad floor (Phase 2 placeholder) ---------- */
 .ad-floor {
   position: absolute;
-  left: 50%; top: 560px;          /* top·width는 JS(layoutFloor)가 보드 크기에 맞춰 갱신 */
+  left: calc(50% + 120px); top: 560px;          /* top·width는 JS(layoutFloor)가 보드 크기에 맞춰 갱신 */
   width: 1100px; height: 900px;
   transform: translateX(-50%) rotateX(90deg);
   transform-origin: top center;
