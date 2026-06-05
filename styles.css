@@ -255,8 +255,8 @@ input[type=range]::-moz-range-thumb {
   width: 130px; height: 120px;
   perspective: 560px;
   pointer-events: none;
+  opacity: .4;  /* 너무 강조되지 않도록 흐리게 */
   /* 배경 투명 — 축만 보이도록 */
-  filter: drop-shadow(0 1px 3px rgba(0,0,0,.35));
 }
 .ax-cap { backface-visibility: visible; }
 .axis-inner {
@@ -322,7 +322,7 @@ input[type=range]::-moz-range-thumb {
 /* Board — 첫 단계를 좌측 정렬(목차 구역 오른쪽). 단계가 늘면 우측으로 */
 .board {
   position: absolute;
-  top: 44px; left: 210px;
+  top: 44px; left: 198px;
   transform-style: preserve-3d;
 }
 
@@ -512,7 +512,7 @@ input[type=range]::-moz-range-thumb {
 .app.flat .group-board:not(.active) { display: none; }
 .app.flat .group-board.active {
   position: static; transform: none !important; opacity: 1; filter: none;
-  display: flex; gap: 22px; padding: 32px;
+  display: flex; gap: 22px; padding: 28px 32px 28px 196px; /* 좌측에 목차 공간 */
   height: 100%; overflow-x: auto; overflow-y: hidden; align-items: flex-start;
 }
 .app.flat .column { position: static; transform: none !important; flex: 0 0 var(--col-w); }

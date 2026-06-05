@@ -625,7 +625,7 @@
       if (el.offsetHeight > maxH) maxH = el.offsetHeight;
     });
     floor.style.width = (boardW + 240) + "px";
-    floor.style.left = (210 + boardW / 2) + "px"; // 좌측정렬 보드의 컬럼 중앙
+    floor.style.left = (198 + boardW / 2) + "px"; // 좌측정렬 보드의 컬럼 중앙
     floor.style.top = (44 + maxH + 28) + "px";    // 컬럼 아래로 (board top + 최대 컬럼 높이)
   }
   // 무한 순환 전환 (끝에서 처음으로 wrap)
