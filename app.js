@@ -222,7 +222,7 @@
         `<div class="card-title">${esc(card.title)}</div>` +
         `<div class="card-meta">${dueHtml}${avHtml}</div>` +
         `<div class="card-foot">` +
-          `<span class="priority ${card.priority}"><svg class="icon"><use href="#i-bars"/></svg>${card.priority}</span>` +
+          `<span class="priority ${card.priority}"><span class="pri-mark">${card.priority === "높음" ? "▲" : card.priority === "낮음" ? "▼" : "▬"}</span>${card.priority}</span>` +
           `<span class="card-actions">` +
             `<button class="card-act flip" title="뒤집기"><svg class="icon"><use href="#i-rotate"/></svg></button>` +
             `<button class="card-act edit" title="편집"><svg class="icon"><use href="#i-edit"/></svg></button>` +
@@ -242,8 +242,6 @@
     el.querySelector(".edit").addEventListener("click", (e) => { e.stopPropagation(); openEditor(card.id); });
     el.querySelector(".del").addEventListener("click", (e) => { e.stopPropagation(); deleteCard(card.id); });
 
-    // double-click spin
-    el.addEventListener("dblclick", () => spin(el));
     // drag
     el.addEventListener("pointerdown", (e) => onCardPointerDown(e, el, card.id));
 
@@ -350,7 +348,7 @@
 
   function onCardPointerDown(e, el, cardId) {
     if (e.button !== 0) return;
-    if (e.target.closest(".card-act")) return; // let buttons work
+    if (e.target.closest(".card-act") || e.target.closest(".back-flip")) return; // let buttons work
     const startX = e.clientX, startY = e.clientY;
     const r = el.getBoundingClientRect();
     drag = {
@@ -561,7 +559,7 @@
     return rel;
   }
   // 대분류 보드 전체가 대관람차처럼 원을 그리며 회전·교체
-  const WHEEL_R = 620, WHEEL_STEP = 30; // 반경(px), 보드 간 각도(deg)
+  const WHEEL_R = 360, WHEEL_STEP = 34; // 반경(px), 보드 간 각도(deg) — 작을수록 전환 시 상하 흔들림↓
   function applyFocus() {
     const n = state.groups.length;
     const focus = clamp(state.view.focus | 0, 0, n - 1);
