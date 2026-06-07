@@ -138,9 +138,13 @@ body {
 .search input { flex: 1; border: 0; background: transparent; color: var(--text); font-size: 14px; outline: none; font-family: var(--font); }
 .search input::placeholder { color: var(--text-faint); }
 
-/* 시점(회전) — 하단 우측 플로팅 */
-.viewpoint {
+/* 시점 + 축 gizmo 공통 컨테이너 — 하단 우측, 세로 중앙 정렬 */
+.vp-group {
   position: fixed; right: 22px; bottom: 58px; z-index: 40;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+/* 시점(회전) */
+.viewpoint {
   display: flex; align-items: center; gap: 12px;
   padding: 9px 16px; border: 1px solid var(--border-strong);
   border-radius: 14px; background: var(--header-bg);
@@ -249,9 +253,8 @@ input[type=range]::-moz-range-thumb {
 }
 .scene.no-anim { transition: none; }
 
-/* 3축 범례 — 우측 하단(시점 슬라이더 위), 시점 따라 회전 */
+/* 3축 범례 — vp-group 안에서 정렬, 시점 따라 회전 */
 .axis-gizmo {
-  position: fixed; right: 22px; bottom: 128px; z-index: 25;
   width: 130px; height: 120px;
   perspective: 560px;
   pointer-events: none;
@@ -533,7 +536,8 @@ input[type=range]::-moz-range-thumb {
 .app.flat .ad-floor { display: none; }
 .app.flat .axis-gizmo { display: none; }   /* 평면에선 3D 축 안내 불필요 */
 .app.flat .pan-bar { display: none; }
-.app.flat .viewpoint, .app.flat #resetView { opacity: .35; pointer-events: none; }
+.app.flat .viewpoint { opacity: .35; pointer-events: none; }
+.app.flat #resetView { opacity: .35; pointer-events: none; }
 
 /* ---------- Ad floor (Phase 2 placeholder) ---------- */
 .ad-floor {
@@ -656,7 +660,7 @@ input[type=range]::-moz-range-thumb {
   .brand-sub { display: none; }
   .group-nav { order: 2; }
   .search { order: 10; width: 100%; }
-  .axis-gizmo, .pan-bar { display: none; }  /* 좁은 화면에선 숨김(목차는 유지) */
+  .vp-group .axis-gizmo, .pan-bar { display: none; }  /* 좁은 화면에선 숨김(목차는 유지) */
   /* 모바일은 평면 모드 중심: 컬럼을 화면 폭에 맞춰 가로 스와이프 */
   .app.flat .group-board.active { padding: 16px; gap: 14px; }
   .app.flat .column { flex: 0 0 86vw; }

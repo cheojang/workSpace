@@ -91,19 +91,6 @@
 
     <!-- ============ 3D Board ============ -->
     <main class="stage" id="stage">
-      <!-- 3축 범례 (시점 따라 회전하는 CAD형 gizmo) -->
-      <div class="axis-gizmo" aria-hidden="true">
-        <div class="axis-inner" id="axisInner">
-          <div class="ax ax-x"></div>
-          <div class="ax ax-y"></div>
-          <div class="ax ax-z"></div>
-          <span class="ax-cap" id="capX">단계</span>
-          <span class="ax-cap" id="capY">리스트</span>
-          <span class="ax-cap" id="capZ">분류</span>
-          <div class="ax-origin"></div>
-        </div>
-      </div>
-
       <div class="scene" id="scene">
         <div class="board" id="board"><!-- columns injected here --></div>
         <div class="ad-floor" id="adFloor" aria-hidden="true"><!-- Phase 2: ad slots --></div>
@@ -117,12 +104,25 @@
     <div class="pan-bar pan-bar-v" id="panBarV" title="상하 이동"><div class="pan-grip" id="panGripV"></div></div>
     <div class="pan-bar pan-bar-h" id="panBarH" title="좌우 이동"><div class="pan-grip" id="panGripH"></div></div>
 
-    <!-- 시점(회전) — 하단 우측 플로팅 -->
-    <div class="viewpoint" id="viewpoint">
-      <span class="vp-label">시점</span>
-      <div class="vp-rows">
-        <label class="vp-row"><span>X</span><input type="range" id="rotX" min="-60" max="60" step="1" /></label>
-        <label class="vp-row"><span>Y</span><input type="range" id="rotY" min="-60" max="60" step="1" /></label>
+    <!-- 시점 + 축 gizmo — 하단 우측, 세로 중앙 정렬 -->
+    <div class="vp-group">
+      <div class="axis-gizmo" aria-hidden="true">
+        <div class="axis-inner" id="axisInner">
+          <div class="ax ax-x"></div>
+          <div class="ax ax-y"></div>
+          <div class="ax ax-z"></div>
+          <span class="ax-cap" id="capX">단계</span>
+          <span class="ax-cap" id="capY">리스트</span>
+          <span class="ax-cap" id="capZ">분류</span>
+          <div class="ax-origin"></div>
+        </div>
+      </div>
+      <div class="viewpoint" id="viewpoint">
+        <span class="vp-label">시점</span>
+        <div class="vp-rows">
+          <label class="vp-row"><span>X</span><input type="range" id="rotX" min="-60" max="60" step="1" /></label>
+          <label class="vp-row"><span>Y</span><input type="range" id="rotY" min="-60" max="60" step="1" /></label>
+        </div>
       </div>
     </div>
 
