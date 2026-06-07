@@ -240,7 +240,7 @@ input[type=range]::-moz-range-thumb {
   user-select: none;
   -webkit-user-select: none;
 }
-.stage.panning { cursor: grabbing; }
+.stage.rotating { cursor: grabbing; }
 /* 입력 필드는 텍스트 선택 허용 */
 .stage input, .stage textarea { user-select: text; -webkit-user-select: text; }
 
@@ -261,7 +261,6 @@ input[type=range]::-moz-range-thumb {
   opacity: .4;  /* 너무 강조되지 않도록 흐리게 */
   /* 배경 투명 — 축만 보이도록 */
 }
-.ax-cap { backface-visibility: visible; }
 .axis-inner {
   position: absolute; left: 50%; top: 50%;
   width: 0; height: 0;
@@ -289,6 +288,7 @@ input[type=range]::-moz-range-thumb {
   transform-origin: center;
   font-size: 12px; font-weight: 800; white-space: nowrap;
   color: var(--text);
+  backface-visibility: visible;
   /* 위치·정면화는 JS(updateGizmo)가 빌보드로 갱신 */
 }
 .ax-x { transform: rotateY(0deg); }    /* +X 오른쪽 = 단계 */
@@ -311,7 +311,6 @@ input[type=range]::-moz-range-thumb {
 .pan-grip:hover { background: var(--text); }
 .pan-bar-v .pan-grip { left: 1px; right: 1px; height: 90px; top: 0; }
 .pan-bar-h .pan-grip { top: 1px; bottom: 1px; width: 140px; left: 0; }
-.app.flat .pan-bar { display: none; }
 
 /* 대분류 목차 — 활성 항목 상단 고정, 나머지 아래로 나열 */
 .group-reel {
@@ -645,9 +644,6 @@ input[type=range]::-moz-range-thumb {
 .toast[hidden] { display: none; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* spin animation */
-@keyframes spin360 { from { transform: translateZ(var(--cz,0)) rotateY(0); } to { transform: translateZ(var(--cz,0)) rotateY(360deg); } }
-.card.spinning { animation: spin360 .8s var(--ease); }
 
 /* scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }

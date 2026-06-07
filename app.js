@@ -9,7 +9,6 @@
   const STORE_KEY = "taskcube.board.v1";
   const COL_W = 290;
   const COL_GAP = 64;
-  const GROUP_Z_STEP = 560; // 대분류 한 칸당 깊이(px)
   const CATEGORIES = ["디자인", "개발", "버그", "문서", "리서치", "기획"];
 
   const ROT_MIN = -60, ROT_MAX = 60;
@@ -22,14 +21,30 @@
   const esc = (s) =>
     String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
+  // 카테고리 색은 CSS 변수로 직접 매핑 — 테마 전환 시 재렌더 불필요.
+  // cat은 CSS 변수명에 들어가므로 알려진 값만 허용(주입 차단), 그 외엔 기타 색.
   function catColor(cat) {
-    const named = getComputedStyle(document.documentElement).getPropertyValue("--c-" + cat).trim();
-    return named || "var(--c-기타)";
+    return CATEGORIES.includes(cat) ? `var(--c-${cat})` : "var(--c-기타)";
   }
   function avatarColor(name) {
     let h = 0;
     for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
     return `hsl(${h} 70% 55%)`;
+  }
+  // 외부 입력(공유 링크·CSV·손상된 localStorage)에서 온 카드를 안전한 형태로 강제 — 렌더 단계 예외 차단
+  function sanitizeCard(c) {
+    if (!c || typeof c !== "object") return null;
+    return {
+      id: typeof c.id === "string" ? c.id : uid("c"),
+      title: String(c.title == null ? "제목 없음" : c.title).slice(0, 120),
+      categories: Array.isArray(c.categories)
+        ? c.categories.map((x) => String(x).slice(0, 24)).filter(Boolean).slice(0, 8)
+        : ["기타"],
+      due: typeof c.due === "string" && /^\d{4}-\d{2}-\d{2}$/.test(c.due) ? c.due : "",
+      assignee: String(c.assignee == null ? "" : c.assignee).slice(0, 24),
+      priority: ["높음", "보통", "낮음"].includes(c.priority) ? c.priority : "보통",
+      note: String(c.note == null ? "" : c.note).slice(0, 1000),
+    };
   }
   function dueInfo(iso) {
     if (!iso) return null;
@@ -134,7 +149,7 @@
       const gb = document.createElement("div");
       gb.className = "group-board" + (gi === focus ? " active" : "");
       gb.dataset.groupId = group.id;
-      gb.style.setProperty("--gz", (-gi * GROUP_Z_STEP) + "px");
+      // --gz/--gy/--gs는 applyFocus()가 대관람차 배치로 설정
 
       const stages = group.stages;
       const totalW = stages.length * COL_W + (stages.length - 1) * COL_GAP;
@@ -199,10 +214,11 @@
     const el = document.createElement("div");
     el.className = "card";
     el.dataset.cardId = card.id;
-    const primary = card.categories[0] || "기타";
+    const cats = Array.isArray(card.categories) ? card.categories : [];
+    const primary = cats[0] || "기타";
     el.style.setProperty("--cat-color", catColor(primary));
 
-    const chips = card.categories.map((cat) =>
+    const chips = cats.map((cat) =>
       `<span class="cat-chip" style="--chip-color:${catColor(cat)}">${esc(cat)}</span>`).join("");
     const di = dueInfo(card.due);
     const dueHtml = di
@@ -329,15 +345,6 @@
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !overlay.hidden) closeEditor(); });
 
   // ===================================================================
-  //  CARD INTERACTIONS — tilt / spin
-  // ===================================================================
-  function spin(el) {
-    if (state.view.mode === "flat") return;
-    el.classList.add("spinning");
-    el.addEventListener("animationend", () => el.classList.remove("spinning"), { once: true });
-  }
-
-  // ===================================================================
   //  DRAG & DROP  (flatten-during-drag + pointer events)
   // ===================================================================
   let drag = null; // {cardId, el, placeholder, offX, offY, savedTransform, started}
@@ -409,10 +416,7 @@
       if (y < r.top + r.height / 2) { ref = c; break; }
     }
     if (ref) stackEl.insertBefore(ph, ref);
-    else {
-      const addBtn = stackEl.parentNode.querySelector(".add-card");
-      stackEl.appendChild(ph);
-    }
+    else stackEl.appendChild(ph);
   }
 
   function elementStackAt(x, y) {
@@ -739,8 +743,7 @@
     state.view.theme = t;
     document.documentElement.setAttribute("data-theme", t);
     save();
-    // re-render so computed category colors refresh
-    render();
+    // 카테고리 색은 CSS 변수(var(--c-…))로 적용돼 캐스케이드로 자동 갱신 — 재렌더 불필요
   }
   $("#themeToggle").addEventListener("click", () =>
     setTheme(state.view.theme === "dark" ? "light" : "dark"));
@@ -750,16 +753,16 @@
 
   // search
   const searchEl = $("#search");
-  function findCard(id) {
-    for (const g of state.groups) if (g.cards[id]) return g.cards[id];
-    return null;
-  }
   function applySearch() {
     const q = (state.view.search || "").trim().toLowerCase();
+    // 모든 대분류 카드를 한 번만 합쳐 O(1) 조회 맵 구성 (카드별 그룹 전체 스캔 방지)
+    const byId = Object.create(null);
+    for (const g of state.groups) Object.assign(byId, g.cards);
     document.querySelectorAll(".card").forEach((el) => {
-      const card = findCard(el.dataset.cardId);
+      const card = byId[el.dataset.cardId];
       if (!card) return;
-      const hay = (card.title + " " + card.categories.join(" ") + " " + (card.assignee || "")).toLowerCase();
+      const cats = Array.isArray(card.categories) ? card.categories.join(" ") : "";
+      const hay = (card.title + " " + cats + " " + (card.assignee || "")).toLowerCase();
       el.classList.toggle("dimmed", q.length > 0 && !hay.includes(q));
     });
   }
@@ -808,6 +811,8 @@
   const CSV_COLS = ["stage", "title", "categories", "due", "assignee", "priority", "note"];
   function csvCell(v) {
     v = String(v == null ? "" : v);
+    // 수식 인젝션 방지: =,+,-,@ 등으로 시작하는 셀은 ' 접두로 무력화 (Excel/Sheets)
+    if (/^[=+\-@\t\r]/.test(v)) v = "'" + v;
     return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
   }
   function exportCsv() {
@@ -854,18 +859,20 @@
       const row = rows[r];
       const title = get(row, "title"); if (!title) continue;
       const cats = get(row, "categories").split(/[|,]/).map((s) => s.trim()).filter(Boolean);
-      const pri = get(row, "priority");
-      const card = {
-        id: uid("c"), title,
+      const card = sanitizeCard({
+        title,
         categories: cats.length ? cats : ["기타"],
         due: get(row, "due"), assignee: get(row, "assignee"),
-        priority: ["높음", "보통", "낮음"].includes(pri) ? pri : "보통",
+        priority: get(row, "priority"),
         note: get(row, "note"),
-      };
+      });
       const g = activeGroup();
-      const stageName = get(row, "stage") || (g.stages[0] && g.stages[0].name) || "할 일";
+      const stageName = (get(row, "stage") || (g.stages[0] && g.stages[0].name) || "할 일").slice(0, 24);
       let st = g.stages.find((s) => s.name === stageName);
-      if (!st) { st = { id: uid("s"), name: stageName, cardIds: [] }; g.stages.push(st); }
+      if (!st) {
+        if (g.stages.length >= 50) continue; // 단계 폭증(DoS) 방지
+        st = { id: uid("s"), name: stageName, cardIds: [] }; g.stages.push(st);
+      }
       g.cards[card.id] = card; st.cardIds.push(card.id); count++;
     }
     flush(); render();
@@ -891,14 +898,18 @@
   }
   function mergeBoard(incoming) {
     const g = activeGroup();
-    incoming.stages.forEach((inStage) => {
-      let target = g.stages.find((s) => s.name === inStage.name);
-      if (!target) { target = { id: uid("s"), name: inStage.name, cardIds: [] }; g.stages.push(target); }
-      (inStage.cardIds || []).forEach((oldId) => {
-        const c = incoming.cards[oldId]; if (!c) return;
-        const nid = uid("c");
-        g.cards[nid] = Object.assign({}, c, { id: nid });
-        target.cardIds.push(nid);
+    const cards = incoming && typeof incoming.cards === "object" ? incoming.cards : {};
+    (Array.isArray(incoming.stages) ? incoming.stages : []).forEach((inStage) => {
+      if (!inStage || typeof inStage !== "object") return;
+      const name = String(inStage.name == null ? "단계" : inStage.name).slice(0, 24);
+      let target = g.stages.find((s) => s.name === name);
+      if (!target) { target = { id: uid("s"), name, cardIds: [] }; g.stages.push(target); }
+      (Array.isArray(inStage.cardIds) ? inStage.cardIds : []).forEach((oldId) => {
+        const clean = sanitizeCard(cards[oldId]);
+        if (!clean) return;
+        clean.id = uid("c");
+        g.cards[clean.id] = clean;
+        target.cardIds.push(clean.id);
       });
     });
   }
@@ -962,7 +973,15 @@
     setMode(state.view.mode);
     updateGizmo();
     checkSharedHash();
-    render();
+    try {
+      render();
+    } catch (e) {
+      // 손상된 상태로 렌더 실패 시 기본 보드로 자가 복구 (영구 멈춤 방지)
+      console.error("render failed, resetting board", e);
+      state = seed();
+      flush();
+      render();
+    }
   }
   boot();
 })();
