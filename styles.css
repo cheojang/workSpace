@@ -310,22 +310,24 @@ input[type=range]::-moz-range-thumb {
 .pan-bar-h .pan-grip { top: 1px; bottom: 1px; width: 140px; left: 0; }
 .app.flat .pan-bar { display: none; }
 
-/* 대분류 목차 — 뷰포트 고정으로 항상 같은 위치 */
+/* 대분류 목차 — 활성 항목 상단 고정, 나머지 아래로 나열 */
 .group-reel {
-  position: fixed; left: 12px; top: 96px;   /* 뷰포트 기준 고정 — 높이 불일치 방지 */
-  z-index: 20; width: 168px; height: 280px;
-  pointer-events: none; /* 컨테이너는 통과, 항목만 클릭 */
+  position: fixed; left: 12px; top: 96px;   /* 뷰포트 기준 고정 */
+  z-index: 20; width: 168px;
+  height: calc(100vh - 116px); /* 헤더 아래 전체 높이 */
+  pointer-events: none;
+  overflow: hidden; /* 화면 밖 항목 감춤 */
 }
 .group-reel .reel-item { pointer-events: auto; }
 .reel-item {
-  position: absolute; left: 0; top: 50%;
-  width: 150px; height: 44px; margin-top: -22px;
+  position: absolute; left: 0; top: 0; /* transform으로 위치 결정 */
+  width: 150px; height: 44px;
   display: flex; align-items: center; gap: 10px;
   padding: 0 14px;
   background: var(--card-bg); border: 1px solid var(--border);
   border-radius: 13px;
-  transition: transform .6s cubic-bezier(.32,.06,.18,1), opacity .5s ease;
-  cursor: ns-resize; user-select: none;
+  transition: transform .5s cubic-bezier(.32,.06,.18,1), opacity .45s ease;
+  cursor: pointer; user-select: none;
 }
 .reel-bar { width: 5px; height: 22px; border-radius: 3px; background: var(--gc, var(--accent)); flex: none; }
 .reel-name { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

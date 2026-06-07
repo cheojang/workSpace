@@ -630,21 +630,22 @@
       reelEl.appendChild(it);
     });
   }
-  // 활성 중앙 고정 + 위아래 정렬. 항목 DOM은 유지하고 transform만 바꿔 부드럽게
-  const REEL_GAP = 50; // 항목 세로 간격(px)
+  // 활성 항목 최상단 고정, 나머지를 순서대로 아래에 나열
+  const REEL_STEP = 50; // 항목 높이(44) + 간격(6)
   function updateReel(focus, n) {
     if (!reelEl) return;
-    const maxVisible = Math.min(3, Math.max(1, Math.floor(n / 2)));
     [...reelEl.children].forEach((it) => {
       const gi = +it.dataset.gi;
-      const rel = relIndex(gi, focus, n), dist = Math.abs(rel);
-      const shown = dist <= maxVisible;
-      it.classList.toggle("active", rel === 0);
-      it.style.opacity = !shown ? "0" : dist === 0 ? "1" : dist === 1 ? "0.5" : "0.22";
-      it.style.pointerEvents = shown ? "auto" : "none";
-      it.style.zIndex = String(10 - dist);
-      // 보드(다음 분류가 위에서 내려옴)와 같은 방향으로: rel↑ = 위쪽
-      it.style.transform = `translateY(${(-rel * REEL_GAP).toFixed(0)}px) scale(${rel === 0 ? 1 : 0.9})`;
+      // rank: 0=active(최상단), 1=바로 아래, 2=두 번째 아래... (순환 순서)
+      const rank = (gi - focus + n) % n;
+      const isActive = rank === 0;
+      it.classList.toggle("active", isActive);
+      it.style.transform = `translateY(${rank * REEL_STEP}px)`;
+      // 아래로 갈수록 점점 흐려짐
+      const opacity = isActive ? 1 : rank === 1 ? 0.6 : rank === 2 ? 0.38 : rank === 3 ? 0.2 : 0;
+      it.style.opacity = String(opacity);
+      it.style.pointerEvents = opacity > 0 ? "auto" : "none";
+      it.style.zIndex = String(n - rank);
     });
   }
   // 바닥 판을 활성 보드 크기(단계 수·컬럼 높이)에 맞춰 배치
