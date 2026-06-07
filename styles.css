@@ -529,6 +529,8 @@ input[type=range]::-moz-range-thumb {
 .app.flat .card { position: relative !important; transform: var(--extra, none) !important; }
 .app.flat .card-face { border-left-color: var(--cat-color, var(--accent)); }
 .app.flat .ad-floor { display: none; }
+.app.flat .axis-gizmo { display: none; }   /* 평면에선 3D 축 안내 불필요 */
+.app.flat .pan-bar { display: none; }
 .app.flat .viewpoint, .app.flat #resetView { opacity: .35; pointer-events: none; }
 
 /* ---------- Ad floor (Phase 2 placeholder) ---------- */
@@ -645,3 +647,17 @@ input[type=range]::-moz-range-thumb {
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- 모바일 / 좁은 화면 반응형 ---------- */
+@media (max-width: 820px) {
+  .header { flex-wrap: wrap; height: auto; min-height: 56px; padding: 8px 10px; gap: 8px; }
+  .brand-sub { display: none; }
+  .group-nav { order: 2; }
+  .search { order: 10; width: 100%; }
+  .axis-gizmo, .group-reel, .pan-bar { display: none; }  /* 좁은 화면에선 숨김 */
+  /* 모바일은 평면 모드 중심: 컬럼을 화면 폭에 맞춰 가로 스와이프 */
+  .app.flat .group-board.active { padding: 16px; gap: 14px; }
+  .app.flat .column { flex: 0 0 86vw; }
+  .add-stage-btn { padding: 9px 13px; font-size: 13px; }
+  .add-stage-btn .icon { font-size: 14px; }
+}
