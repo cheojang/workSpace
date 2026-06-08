@@ -239,7 +239,7 @@ input[type=range]::-moz-range-thumb {
   position: relative;
   overflow: hidden;
   perspective: 1800px;
-  perspective-origin: 50% 42%;
+  perspective-origin: 50% 6%;   /* 소실점을 상단으로 — 보드 상단을 목차 상단에 고정 */
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
@@ -252,6 +252,7 @@ input[type=range]::-moz-range-thumb {
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
+  transform-origin: 50% 0;   /* 회전·줌 피벗을 상단으로 — 시점 변경 시 상단 정렬 유지 */
   transform: translateZ(-120px) rotateX(var(--rx, -14deg)) rotateY(var(--ry, 16deg));
   transition: transform .5s var(--ease);
 }
