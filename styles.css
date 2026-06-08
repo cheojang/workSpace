@@ -99,7 +99,7 @@ body {
   grid-template-rows: auto 1fr auto;
   position: relative;
   --hdr-h: 70px;        /* 헤더 높이(고정) */
-  --content-gap: 26px;  /* 헤더 아래 ~ 목차/보드 상단 공통 여백 */
+  --content-gap: 48px;  /* 헤더 아래 ~ 목차/보드 상단 공통 여백 */
 }
 
 /* ---------- Header ---------- */
@@ -366,8 +366,11 @@ input[type=range]::-moz-range-thumb {
 .group-board:not(.active) {
   opacity: .18;
   filter: grayscale(.65) brightness(.85) blur(2px);
-  pointer-events: none;
+  pointer-events: auto;   /* 보드 클릭으로 분류 전환 */
+  cursor: pointer;
 }
+/* 비활성 보드의 내부 요소는 클릭 비활성(보드 자체만 클릭→전환) */
+.group-board:not(.active) * { pointer-events: none; }
 [data-theme="light"] .group-board:not(.active) { opacity: .32; }
 .group-board.active { opacity: 1; filter: none; }
 

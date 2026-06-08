@@ -149,7 +149,13 @@
       const gb = document.createElement("div");
       gb.className = "group-board" + (gi === focus ? " active" : "");
       gb.dataset.groupId = group.id;
-      // --gz/--gy/--gs는 applyFocus()가 대관람차 배치로 설정
+      gb.dataset.gi = String(gi);
+      // --gz/--gy/--gs는 applyFocus()가 캐스케이드 배치로 설정
+      // 비활성 보드(뒤로 깔린 분류)를 클릭하면 해당 분류로 전환
+      gb.addEventListener("click", () => {
+        const idx = +gb.dataset.gi;
+        if (idx !== (state.view.focus | 0)) setFocus(idx);
+      });
 
       const stages = group.stages;
       const totalW = stages.length * COL_W + (stages.length - 1) * COL_GAP;
@@ -546,6 +552,7 @@
   stageEl.addEventListener("pointerdown", (e) => {
     if (state.view.mode === "flat") return;
     if (e.target.closest(".column") || e.target.closest(".card")) return;
+    if (e.target.closest(".group-board:not(.active)")) return; // 비활성 보드 클릭 → 분류 전환(click 핸들러)
     e.preventDefault(); // 텍스트 선택 방지
     bgDrag = { x: e.clientX, y: e.clientY, rx: state.view.rotX, ry: state.view.rotY };
     stageEl.classList.add("rotating");
