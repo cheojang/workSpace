@@ -560,6 +560,7 @@
     if (state.view.mode === "flat") return;
     if (e.target.closest(".column") || e.target.closest(".card")) return;
     if (e.target.closest(".group-board:not(.active)")) return; // 비활성 보드 클릭 → 분류 전환(click 핸들러)
+    if (e.target.closest(".group-reel")) return; // 목차 영역은 분류 전환 전용
     e.preventDefault(); // 텍스트 선택 방지
     bgDrag = { x: e.clientX, y: e.clientY, rx: state.view.rotX, ry: state.view.rotY };
     stageEl.classList.add("rotating");
@@ -636,23 +637,23 @@
       it.dataset.gi = String(gi);
       it.style.setProperty("--gc", groupColor(gi));
       it.innerHTML = `<span class="reel-bar"></span><span class="reel-name">${esc(g.name)}</span>`;
-      // 휠(데스크톱) + 세로 스와이프/탭(터치·마우스 공통)으로 분류 전환
-      it.addEventListener("wheel", groupWheel, { passive: false });
-      it.addEventListener("pointerdown", onReelPointerDown);
       reelEl.appendChild(it);
     });
   }
-  // 목차 세로 드래그(스와이프) = 분류 전환, 거의 안 움직이면 탭으로 처리
+  // 목차(분류) 영역 = 휠 + 세로 스와이프로 전환. 입체에선 씬 회전/줌과 분리해 별도 관리.
+  // 핸들러는 컨테이너(reelEl)에 1회만 부착(아래 init), 항목 재생성과 무관.
   const REEL_SWIPE = 46; // 한 칸 전환에 필요한 드래그 거리(px)
   let reelDrag = null;
   function onReelPointerDown(e) {
+    if (!reelEl) return;
     if (e.button != null && e.button !== 0) return;
-    const it = e.currentTarget;
-    reelDrag = { y: e.clientY, base: state.view.focus | 0, gi: +it.dataset.gi, moved: false };
-    try { it.setPointerCapture(e.pointerId); } catch (_) {}
-    it.addEventListener("pointermove", onReelPointerMove);
-    it.addEventListener("pointerup", onReelPointerUp);
-    it.addEventListener("pointercancel", onReelPointerUp);
+    e.stopPropagation(); // 씬 회전 드래그로 번지지 않게
+    const item = e.target.closest(".reel-item");
+    reelDrag = { y: e.clientY, base: state.view.focus | 0, gi: item ? +item.dataset.gi : -1, moved: false };
+    try { reelEl.setPointerCapture(e.pointerId); } catch (_) {}
+    reelEl.addEventListener("pointermove", onReelPointerMove);
+    reelEl.addEventListener("pointerup", onReelPointerUp);
+    reelEl.addEventListener("pointercancel", onReelPointerUp);
   }
   function onReelPointerMove(e) {
     if (!reelDrag) return;
@@ -663,12 +664,11 @@
     const target = reelDrag.base + Math.round(-dy / REEL_SWIPE);
     if (target !== (state.view.focus | 0)) setFocus(target);
   }
-  function onReelPointerUp(e) {
-    const it = e.currentTarget;
-    it.removeEventListener("pointermove", onReelPointerMove);
-    it.removeEventListener("pointerup", onReelPointerUp);
-    it.removeEventListener("pointercancel", onReelPointerUp);
-    if (reelDrag && !reelDrag.moved) {
+  function onReelPointerUp() {
+    reelEl.removeEventListener("pointermove", onReelPointerMove);
+    reelEl.removeEventListener("pointerup", onReelPointerUp);
+    reelEl.removeEventListener("pointercancel", onReelPointerUp);
+    if (reelDrag && !reelDrag.moved && reelDrag.gi >= 0) {
       // 탭: 활성이면 이름변경, 아니면 해당 분류로 전환
       reelDrag.gi === (state.view.focus | 0) ? renameGroup() : setFocus(reelDrag.gi);
     }
@@ -739,6 +739,11 @@
     setFocus((state.view.focus | 0) + (e.deltaY > 0 ? 1 : -1));
   }
   zBadge.addEventListener("wheel", groupWheel, { passive: false });
+  // 목차(분류) 영역 전체에 휠 전환 + 세로 스와이프 부착 (입체·평면 공통, 1회)
+  if (reelEl) {
+    reelEl.addEventListener("wheel", groupWheel, { passive: false });
+    reelEl.addEventListener("pointerdown", onReelPointerDown);
+  }
   $("#zNavPrev").addEventListener("click", () => setFocus((state.view.focus | 0) - 1));
   $("#zNavNext").addEventListener("click", () => setFocus((state.view.focus | 0) + 1));
   // 화살표 키로도 대분류 전환

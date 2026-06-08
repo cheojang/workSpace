@@ -322,8 +322,9 @@ input[type=range]::-moz-range-thumb {
   position: fixed; left: 12px;
   top: calc(var(--hdr-h) + var(--content-gap));  /* 보드 상단과 동일 높이 */
   z-index: 20; width: 168px;
-  height: calc(100vh - var(--hdr-h) - var(--content-gap) - 20px);
-  pointer-events: none;
+  height: 300px; /* 분류 목차 전용 영역(휠/스와이프 zone). 나머지 좌측은 씬 회전 */
+  pointer-events: auto; /* 영역 전체가 분류 전환 zone — 입체에서 씬 제스처와 분리 */
+  touch-action: none;
   overflow: hidden; /* 화면 밖 항목 감춤 */
 }
 .group-reel .reel-item { pointer-events: auto; }
