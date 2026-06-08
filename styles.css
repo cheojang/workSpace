@@ -336,6 +336,7 @@ input[type=range]::-moz-range-thumb {
   border-radius: 13px;
   transition: transform .5s cubic-bezier(.32,.06,.18,1), opacity .45s ease;
   cursor: pointer; user-select: none;
+  touch-action: none; /* 터치 세로 스와이프를 분류 전환에 사용 */
 }
 .reel-bar { width: 5px; height: 22px; border-radius: 3px; background: var(--gc, var(--accent)); flex: none; }
 .reel-name { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

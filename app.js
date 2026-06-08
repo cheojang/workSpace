@@ -636,10 +636,43 @@
       it.dataset.gi = String(gi);
       it.style.setProperty("--gc", groupColor(gi));
       it.innerHTML = `<span class="reel-bar"></span><span class="reel-name">${esc(g.name)}</span>`;
-      it.addEventListener("click", () => ((+it.dataset.gi === (state.view.focus | 0)) ? renameGroup() : setFocus(+it.dataset.gi)));
+      // 휠(데스크톱) + 세로 스와이프/탭(터치·마우스 공통)으로 분류 전환
       it.addEventListener("wheel", groupWheel, { passive: false });
+      it.addEventListener("pointerdown", onReelPointerDown);
       reelEl.appendChild(it);
     });
+  }
+  // 목차 세로 드래그(스와이프) = 분류 전환, 거의 안 움직이면 탭으로 처리
+  const REEL_SWIPE = 46; // 한 칸 전환에 필요한 드래그 거리(px)
+  let reelDrag = null;
+  function onReelPointerDown(e) {
+    if (e.button != null && e.button !== 0) return;
+    const it = e.currentTarget;
+    reelDrag = { y: e.clientY, base: state.view.focus | 0, gi: +it.dataset.gi, moved: false };
+    try { it.setPointerCapture(e.pointerId); } catch (_) {}
+    it.addEventListener("pointermove", onReelPointerMove);
+    it.addEventListener("pointerup", onReelPointerUp);
+    it.addEventListener("pointercancel", onReelPointerUp);
+  }
+  function onReelPointerMove(e) {
+    if (!reelDrag) return;
+    e.preventDefault();
+    const dy = e.clientY - reelDrag.y;
+    if (Math.abs(dy) > 6) reelDrag.moved = true;
+    // 위로 드래그(dy<0) = 다음 분류(아래 항목이 위로 올라옴)
+    const target = reelDrag.base + Math.round(-dy / REEL_SWIPE);
+    if (target !== (state.view.focus | 0)) setFocus(target);
+  }
+  function onReelPointerUp(e) {
+    const it = e.currentTarget;
+    it.removeEventListener("pointermove", onReelPointerMove);
+    it.removeEventListener("pointerup", onReelPointerUp);
+    it.removeEventListener("pointercancel", onReelPointerUp);
+    if (reelDrag && !reelDrag.moved) {
+      // 탭: 활성이면 이름변경, 아니면 해당 분류로 전환
+      reelDrag.gi === (state.view.focus | 0) ? renameGroup() : setFocus(reelDrag.gi);
+    }
+    reelDrag = null;
   }
   // 활성 항목 최상단 고정, 나머지를 순서대로 아래에 나열
   const REEL_STEP = 50; // 항목 높이(44) + 간격(6)
