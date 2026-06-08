@@ -590,28 +590,21 @@
   // 대분류별 색 (목차 구분용)
   const GROUP_COLORS = ["#f43f5e", "#6366f1", "#10b981", "#f59e0b", "#14b8a6", "#8b5cf6", "#ef4444", "#0ea5e9"];
   const groupColor = (i) => GROUP_COLORS[((i % GROUP_COLORS.length) + GROUP_COLORS.length) % GROUP_COLORS.length];
-  // 순환 최단 거리
-  function relIndex(gi, focus, n) {
-    let rel = gi - focus;
-    if (rel > n / 2) rel -= n;
-    if (rel < -n / 2) rel += n;
-    return rel;
-  }
-  // 대분류 보드 전체가 대관람차처럼 원을 그리며 회전·교체
-  const WHEEL_R = 360, WHEEL_STEP = 34; // 반경(px), 보드 간 각도(deg) — 작을수록 전환 시 상하 흔들림↓
+  // 보드 배치: 활성=최상단·정면, 나머지는 분류 순서대로 아래로 + 뒤로 (목차와 동일한 캐스케이드)
+  const BOARD_Y = 70;   // 분류 한 칸당 아래로 내려가는 거리(px)
+  const BOARD_Z = 200;  // 분류 한 칸당 뒤로 물러나는 깊이(px)
   function applyFocus() {
     const n = state.groups.length;
     const focus = clamp(state.view.focus | 0, 0, n - 1);
     const boards = [...document.querySelectorAll(".group-board")];
     boards.forEach((gb, gi) => {
-      const rel = relIndex(gi, focus, n);
-      const angle = rel * WHEEL_STEP;
-      const rad = angle * Math.PI / 180;
-      // 원 둘레 위치: 활성은 정면(앞·중앙), 다음은 위에서, 이전은 아래에서 호를 그림 (곤돌라는 수평 유지)
-      gb.style.setProperty("--gz", (WHEEL_R * Math.cos(rad) - WHEEL_R).toFixed(1) + "px");
-      gb.style.setProperty("--gy", (-WHEEL_R * Math.sin(rad)).toFixed(1) + "px");
-      gb.style.setProperty("--gs", rel === 0 ? 1 : 0.9);
-      gb.classList.toggle("active", rel === 0);
+      const rank = (gi - focus + n) % n; // 0=활성(최상단·정면), 1·2…=아래로
+      const active = rank === 0;
+      gb.style.setProperty("--gy", (rank * BOARD_Y).toFixed(1) + "px");
+      gb.style.setProperty("--gz", (-rank * BOARD_Z).toFixed(1) + "px");
+      gb.style.setProperty("--gs", active ? 1 : 0.94);
+      gb.style.zIndex = String(n - rank);
+      gb.classList.toggle("active", active);
     });
     const g = state.groups[focus];
     if (zName) zName.textContent = g ? g.name : "";

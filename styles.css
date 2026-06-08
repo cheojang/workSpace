@@ -98,6 +98,8 @@ body {
   display: grid;
   grid-template-rows: auto 1fr auto;
   position: relative;
+  --hdr-h: 70px;        /* 헤더 높이(고정) */
+  --content-gap: 26px;  /* 헤더 아래 ~ 목차/보드 상단 공통 여백 */
 }
 
 /* ---------- Header ---------- */
@@ -106,6 +108,8 @@ body {
   align-items: center;
   gap: 18px;
   padding: 14px 22px;
+  height: var(--hdr-h);
+  box-sizing: border-box;
   background: var(--header-bg);
   backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--border);
@@ -314,9 +318,10 @@ input[type=range]::-moz-range-thumb {
 
 /* 대분류 목차 — 활성 항목 상단 고정, 나머지 아래로 나열 */
 .group-reel {
-  position: fixed; left: 12px; top: 96px;   /* 뷰포트 기준 고정 */
+  position: fixed; left: 12px;
+  top: calc(var(--hdr-h) + var(--content-gap));  /* 보드 상단과 동일 높이 */
   z-index: 20; width: 168px;
-  height: calc(100vh - 116px); /* 헤더 아래 전체 높이 */
+  height: calc(100vh - var(--hdr-h) - var(--content-gap) - 20px);
   pointer-events: none;
   overflow: hidden; /* 화면 밖 항목 감춤 */
 }
@@ -344,7 +349,7 @@ input[type=range]::-moz-range-thumb {
 /* Board — 첫 단계를 좌측 정렬(목차 구역 오른쪽). 단계가 늘면 우측으로 */
 .board {
   position: absolute;
-  top: 44px; left: 198px;
+  top: var(--content-gap); left: 198px;  /* 상단을 목차와 동일 높이로 정렬 */
   transform-style: preserve-3d;
 }
 
@@ -524,7 +529,8 @@ input[type=range]::-moz-range-thumb {
 .app.flat .group-board:not(.active) { display: none; }
 .app.flat .group-board.active {
   position: static; transform: none !important; opacity: 1; filter: none;
-  display: flex; gap: 22px; padding: 28px 32px 28px 196px; /* 좌측에 목차 공간 */
+  display: flex; gap: 22px;
+  padding: var(--content-gap) 32px 28px 196px; /* 상단=목차 높이, 좌측=목차 공간 */
   height: 100%; overflow: auto; align-items: flex-start; /* 카드 많으면 세로로도 스크롤 */
 }
 .app.flat .column { position: static; transform: none !important; flex: 0 0 var(--col-w); height: auto; }
