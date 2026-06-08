@@ -151,11 +151,15 @@
       gb.dataset.groupId = group.id;
       gb.dataset.gi = String(gi);
       // --gz/--gy/--gs는 applyFocus()가 캐스케이드 배치로 설정
-      // 비활성 보드(뒤로 깔린 분류)를 클릭하면 해당 분류로 전환
-      gb.addEventListener("click", () => {
+      // 비활성 보드(뒤로 깔린 분류) 클릭 → 해당 분류로 전환.
+      // 캡처 단계에서 가로채 카드/버튼 클릭보다 먼저 처리(카드 편집 방지)
+      gb.addEventListener("click", (e) => {
         const idx = +gb.dataset.gi;
-        if (idx !== (state.view.focus | 0)) setFocus(idx);
-      });
+        if (idx !== (state.view.focus | 0)) {
+          e.stopPropagation(); e.preventDefault();
+          setFocus(idx);
+        }
+      }, true);
 
       const stages = group.stages;
       const totalW = stages.length * COL_W + (stages.length - 1) * COL_GAP;
@@ -357,6 +361,9 @@
 
   function onCardPointerDown(e, el, cardId) {
     if (e.button !== 0) return;
+    // 비활성(뒤로 깔린) 분류의 카드는 드래그 금지 — 클릭하면 분류 전환만
+    const gboard = el.closest(".group-board");
+    if (gboard && !gboard.classList.contains("active")) return;
     if (e.target.closest(".card-act") || e.target.closest(".back-flip")) return; // let buttons work
     const startX = e.clientX, startY = e.clientY;
     const r = el.getBoundingClientRect();

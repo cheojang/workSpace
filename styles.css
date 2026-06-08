@@ -366,11 +366,10 @@ input[type=range]::-moz-range-thumb {
 .group-board:not(.active) {
   opacity: .18;
   filter: grayscale(.65) brightness(.85) blur(2px);
-  pointer-events: auto;   /* 보드 클릭으로 분류 전환 */
+  pointer-events: auto;   /* 보드(카드 포함) 클릭으로 분류 전환 */
   cursor: pointer;
 }
-/* 비활성 보드의 내부 요소는 클릭 비활성(보드 자체만 클릭→전환) */
-.group-board:not(.active) * { pointer-events: none; }
+.group-board:not(.active) .card { cursor: pointer; }
 [data-theme="light"] .group-board:not(.active) { opacity: .32; }
 .group-board.active { opacity: 1; filter: none; }
 
